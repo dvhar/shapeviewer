@@ -1,0 +1,89 @@
+<style>
+body {
+
+  background-color: black;
+}
+#c {
+  border: 2px solid black;
+  width: 40em;
+  height: 30em;
+}
+#fps {
+  width: 20em;
+}
+#whatFile {
+  width: 2em;
+}
+#main {
+  display: block;
+  margin: auto;
+  text-align: center;
+  color: LimeGreen;
+}
+#usage {
+  display: block;
+  text-align: left;
+  max-width: 30em;
+  margin: auto;
+}
+</style>
+<div id="main">
+<canvas id="c" width="400" height="400" ></canvas>
+<br>
+<button id=submitFile onclick=selectFile(10)>10</button>
+<button id=submitFile onclick=selectFile(11)>11</button>
+<button id=submitFile onclick=selectFile(12)>12</button>
+<button id=submitFile onclick=selectFile(13)>13</button>
+<button id=submitFile onclick=selectFile(17)>17</button>
+<button id=submitFile onclick=selectFile(18)>18</button>
+<button id=submitFile onclick=selectFile(26)>26</button>
+<button id=submitFile onclick=selectFile(49)>49</button>
+<button id=submitFile onclick=selectFile(50)>50</button>
+<button id=submitFile onclick=selectFile(51)>51</button>
+<button id=submitFile onclick=selectFile(52)>52</button>
+<button id=submitFile onclick=selectFile(53)>53</button>
+<button id=submitFile onclick=selectFile(54)>54</button>
+<button id=submitFile onclick=selectFile(58)>58</button>
+<span id="fps"></span>
+  <div id="usage">
+  <p><u>Controls</u></p>
+  <ul>
+    <li>Rotate: arrow keys and Z/X</li>
+    <li>Move around: WASD</li>
+    <li>Zoom: Q/E</li>
+  </ul>
+  </div>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+
+  in vec4 a_position;
+  in vec3 a_normal;
+  out vec3 pos_normal;
+  uniform mat4 transform;
+
+  void main() {
+    gl_Position = transform * a_position;
+
+    pos_normal = mat3(transform) * a_normal;
+  }
+
+</script>
+<script id="fs" type="x-shader/x-fragment">#version 300 es
+
+  precision mediump float;
+  in vec3 pos_normal;
+  out vec4 outColor;
+
+  void main() { 
+
+    vec4 base_color = vec4(1.5,0.8,0.8,1);
+    float light = dot(pos_normal,vec3(0.1,0.3,-0.7));
+    outColor = sin( vec4(base_color.rbg*light,1) - 0.5*vec4(0, pos_normal.xy, 0) );
+  }
+
+</script>
+<script src="base.js"></script>
+<script src="math.js"></script>
+<script src="render.js"></script>
+<script src="loader.js"></script>
