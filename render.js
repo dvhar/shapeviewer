@@ -12,24 +12,31 @@ function main(model) {
     gl.clearColor(0,0,0,0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    projectionMat = p4Matrix();
+    var projectionMat = p4Matrix();
 
-    cameraMat = i4Matrix();
+    var cameraMat = i4Matrix();
     rz4Matrix(v.r.z,cameraMat);
     ry4Matrix(v.r.y,cameraMat);
     rx4Matrix(v.r.x,cameraMat);
     tr4Matrix(v.t.x,v.t.y,v.t.z,cameraMat);
-    viewMat = invert([],cameraMat);
 
-    viewProjMat = mProduct(projectionMat,viewMat);
+    var c = [cameraMat[12],cameraMat[13],cameraMat[14]];
+    //cameraMat = lookAt(c,[0,0,50]);
 
 
-      gl.uniformMatrix4fv(transform_loc,false,viewProjMat);
-      gl.enable(gl.CULL_FACE);
-      gl.enable(gl.DEPTH_TEST);
-      gl.useProgram(model.program);
-      gl.bindVertexArray(model.vao);
-      gl.drawArrays(gl.TRIANGLES, 0, model.verts.length/3);
+    var viewMat = invert([],cameraMat);
+    var viewProjMat = mProduct(projectionMat,viewMat);
+
+    var p = vecProd([0,0,0,1],viewProjMat);
+    document.getElementById("fps").innerHTML = c[0].toFixed(0)+' '+ c[1].toFixed(0)+' '+ c[2].toFixed(0)+':'+p[0].toFixed(0)+' '+ p[1].toFixed(0)+' '+p[2].toFixed(0); 
+    
+
+    gl.uniformMatrix4fv(transform_loc,false,viewProjMat);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.useProgram(model.program);
+    gl.bindVertexArray(model.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, model.verts.length/3);
 
 
   }

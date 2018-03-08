@@ -229,10 +229,13 @@ function vecProd(v, m) {
   return out;
 }
 
+function normalize(v) {
+  var mag = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  if (mag === 0) { return [0,0,0]; }
+  else { return [ v[0]/mag, v[1]/mag, v[2]/mag ]; }
+}
 
 function triNorm(p0x, p0y, p0z, p1x, p1y, p1z, p2x, p2y, p2z) {
-
-  output = [];
 
   var p1x = p1x - p0x;
   var p1y = p1y - p0y;
@@ -246,30 +249,15 @@ function triNorm(p0x, p0y, p0z, p1x, p1y, p1z, p2x, p2y, p2z) {
   var p3y = p1z * p2x - p1x * p2z;
   var p3z = p1x * p2y - p1y * p2x;
 
-  var mag = Math.sqrt(p3x * p3x + p3y * p3y + p3z * p3z);
-  if (mag === 0) {
-    output[0] = 0;
-    output[1] = 0;
-    output[2] = 0;
-  } else {
-    output[0] = p3x / mag;
-    output[1] = p3y / mag;
-    output[2] = p3z / mag;
-  }
-
-  return output;
+  return normalize([p3x,p3y,p3z]);
 }
 
 /**
- * Generates a look-at matrix with the given cam position, focal point, and up axis
- *
  * @param {mat4} out mat4 frustum matrix will be written into
  * @param {vec3} cam Position of the viewer
  * @param {vec3} target Point the viewer is looking at
- * @param {vec3} up vec3 pointing up
- * @returns {mat4} out
  */
-function lookAt(cam, target, out=[], up=[0,1,0]) {
+function lookAt(cam, target, up=[0,1,0]) {
   let x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
   let camx = cam[0];
   let camy = cam[1];
@@ -284,61 +272,24 @@ function lookAt(cam, target, out=[], up=[0,1,0]) {
   z0 = camx - targetx;
   z1 = camy - targety;
   z2 = camz - targetz;
-
-  len = 1 / Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
-  z0 *= len;
-  z1 *= len;
-  z2 *= len;
+  let nz = normalize([z0,z1,z2]);
 
   x0 = upy * z2 - upz * z1;
   x1 = upz * z0 - upx * z2;
   x2 = upx * z1 - upy * z0;
-  len = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
-  if (!len) {
-    x0 = 0;
-    x1 = 0;
-    x2 = 0;
-  } else {
-    len = 1 / len;
-    x0 *= len;
-    x1 *= len;
-    x2 *= len;
-  }
+  let nx = normalize([x0,x1,x2]);
 
   y0 = z1 * x2 - z2 * x1;
   y1 = z2 * x0 - z0 * x2;
   y2 = z0 * x1 - z1 * x0;
+  let ny = normalize([y0,y1,y2]);
 
-  len = Math.sqrt(y0 * y0 + y1 * y1 + y2 * y2);
-  if (!len) {
-    y0 = 0;
-    y1 = 0;
-    y2 = 0;
-  } else {
-    len = 1 / len;
-    y0 *= len;
-    y1 *= len;
-    y2 *= len;
-  }
-
-  out[0] = x0;
-  out[1] = y0;
-  out[2] = z0;
-  out[3] = 0;
-  out[4] = x1;
-  out[5] = y1;
-  out[6] = z1;
-  out[7] = 0;
-  out[8] = x2;
-  out[9] = y2;
-  out[10] = z2;
-  out[11] = 0;
-  out[12] = -(x0 * camx + x1 * camy + x2 * camz);
-  out[13] = -(y0 * camx + y1 * camy + y2 * camz);
-  out[14] = -(z0 * camx + z1 * camy + z2 * camz);
-  out[15] = 1;
-
-  return out;
+  return [ nx[0],ny[0],nz[0],0,
+           nx[1],ny[1],nz[1],0,
+           nx[2],ny[2],nz[2],0,
+           -(nx[0] * camx + nx[1] * camy + nx[2] * camz),
+           -(ny[0] * camx + ny[1] * camy + ny[2] * camz),
+           -(nz[0] * camx + nz[1] * camy + nz[2] * camz),
+           1];
 }
-
 
