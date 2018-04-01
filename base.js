@@ -98,4 +98,11 @@ keycodes = {
   67: 'c'
 }
 
+var keys = {};
+
+onkeydown = onkeyup = function(e){
+    e = e || event;
+    keys[keycodes[e.keyCode]] = e.type == 'keydown';
+}
+
 

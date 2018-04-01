@@ -72,10 +72,11 @@ function loader (txt) {
   }
 
   //center the model
+  let mx=(lx+hx)/2,my=(ly+hy)/2,mz=(lz+hz)/2;
   for (var x=0; x<model.verts.length; x+=3) {
-    model.verts[x] -= (lx+hx)/2;
-    model.verts[x+1] -= (ly+hy)/2;
-    model.verts[x+2] -= (lz+hz)/2;
+    model.verts[x] -= mx;
+    model.verts[x+1] -= my;
+    model.verts[x+2] -= mz;
   }
 
   //set up model program
@@ -111,7 +112,7 @@ function loader (txt) {
 
 
 function loadMeshFile(meshFile) {
-  filePath =  "/shape/"+meshFile;
+  filePath =  "/cw/webgltest/newer/shape/"+meshFile;
   var meshRequest = createRequest();
   meshRequest.open("GET", filePath, true);
   meshRequest.onreadystatechange = function() {

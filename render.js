@@ -1,3 +1,12 @@
+function matDebug(m) { 
+        document.getElementById("fps").innerHTML = '<br>' +
+  "<table>"+
+        "<tr><td>"+m[0].toFixed(2) + '</td><td>'+ m[4].toFixed(2) + '</td><td>'+ m[8].toFixed(2) + '</td><td>'+ m[12].toFixed(2) + '</td></tr>'+ 
+        "<tr><td>"+m[1].toFixed(2) + '</td><td>'+ m[5].toFixed(2) + '</td><td>'+ m[9].toFixed(2) + '</td><td>'+ m[13].toFixed(2) + '</td></tr>'+ 
+        "<tr><td>"+m[2].toFixed(2) + '</td><td>'+ m[6].toFixed(2) + '</td><td>'+ m[10].toFixed(2) + '</td><td>'+ m[14].toFixed(2) + '</td></tr>'+ 
+        "<tr><td>"+m[3].toFixed(2) + '</td><td>'+ m[7].toFixed(2) + '</td><td>'+ m[11].toFixed(2) + '</td><td>'+ m[15].toFixed(2) + '</td></tr>'+
+        "</table>";
+}
 
 
 function main(model) {
@@ -14,22 +23,20 @@ function main(model) {
 
     var projectionMat = p4Matrix();
 
-    var cameraMat = i4Matrix();
-    rz4Matrix(v.r.z,cameraMat);
-    ry4Matrix(v.r.y,cameraMat);
-    rx4Matrix(v.r.x,cameraMat);
-    tr4Matrix(v.t.x,v.t.y,v.t.z,cameraMat);
+    var cam = [v.t.x,v.t.y,v.t.z];
+    var tar = [0,0,0];
 
-    var c = [cameraMat[12],cameraMat[13],cameraMat[14]];
-    //cameraMat = lookAt(c,[0,0,50]);
+    cameraMat = lookAt(cam,tar);
 
+    //var viewMat = invert([],cameraMat);
+    var viewMat = cameraMat;
 
-    var viewMat = invert([],cameraMat);
     var viewProjMat = mProduct(projectionMat,viewMat);
 
-    var p = vecProd([0,0,0,1],viewProjMat);
-    document.getElementById("fps").innerHTML = c[0].toFixed(0)+' '+ c[1].toFixed(0)+' '+ c[2].toFixed(0)+':'+p[0].toFixed(0)+' '+ p[1].toFixed(0)+' '+p[2].toFixed(0); 
-    
+    //var p = vecProd([0,0,0,1],viewProjMat);
+    //document.getElementById("fps").innerHTML = c[0].toFixed(0)+' '+ c[1].toFixed(0)+' '+ c[2].toFixed(0)+':'+p[0].toFixed(0)+' '+ p[1].toFixed(0)+' '+p[2].toFixed(0); 
+   
+   matDebug(viewProjMat);
 
     gl.uniformMatrix4fv(transform_loc,false,viewProjMat);
     gl.enable(gl.CULL_FACE);
@@ -45,9 +52,8 @@ function main(model) {
   var active = true;
   var radPerSec	= (Math.PI / 180.0)*180;
   var fps = 65;
-  var keys = {};
   var moves = { m: {w:0.5, n:0, z:0},
-                t: {x:0, y:0, z:100},
+                t: {x:0, y:0, z:-50},
                 r: {x:0, y:0, z:0},
                 s: {x:1, y:1, z:1},
                 f: {x:1, y:0, z:0},
@@ -67,18 +73,18 @@ function main(model) {
     var dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
 
-      if (keys.up) moves.r.x -= radPerSec*dt;
-      if (keys.down) moves.r.x += radPerSec*dt;
-      if (keys.left) moves.r.y -= radPerSec*dt;
-      if (keys.right) moves.r.y += radPerSec*dt;
+      if (keys.up) moves.r.x -= 50*dt;
+      if (keys.down) moves.r.x += 50*dt;
+      if (keys.left) moves.r.y -= 50*dt;
+      if (keys.right) moves.r.y += 50*dt;
       if (keys.w) moves.t.y += 50*dt;
       if (keys.s) moves.t.y -= 50*dt;
       if (keys.a) moves.t.x -= 50*dt;
       if (keys.d) moves.t.x += 50*dt;
-      if (keys.q) moves.t.z += 93*dt;
-      if (keys.e) moves.t.z -= 93*dt;
-      if (keys.z) moves.r.z += radPerSec*dt;
-      if (keys.x) moves.r.z -= radPerSec*dt;
+      if (keys.q) moves.t.z += 50*dt;
+      if (keys.e) moves.t.z -= 50*dt;
+      if (keys.z) moves.r.z += 50*dt;
+      if (keys.x) moves.r.z -= 50*dt;
 
 
       drawFrame(moves);
@@ -87,12 +93,6 @@ function main(model) {
     if (active) window.requestAnimationFrame(run); 
 
   }
-
-  onkeydown = onkeyup = function(e){
-      e = e || event;
-      keys[keycodes[e.keyCode]] = e.type == 'keydown';
-  }
-
 } //end main
 
 
