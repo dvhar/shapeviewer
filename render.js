@@ -1,12 +1,3 @@
-function matDebug(m) { 
-        document.getElementById("fps").innerHTML = '<br>' +
-  "<table>"+
-        "<tr><td>"+m[0].toFixed(2) + '</td><td>'+ m[4].toFixed(2) + '</td><td>'+ m[8].toFixed(2) + '</td><td>'+ m[12].toFixed(2) + '</td></tr>'+ 
-        "<tr><td>"+m[1].toFixed(2) + '</td><td>'+ m[5].toFixed(2) + '</td><td>'+ m[9].toFixed(2) + '</td><td>'+ m[13].toFixed(2) + '</td></tr>'+ 
-        "<tr><td>"+m[2].toFixed(2) + '</td><td>'+ m[6].toFixed(2) + '</td><td>'+ m[10].toFixed(2) + '</td><td>'+ m[14].toFixed(2) + '</td></tr>'+ 
-        "<tr><td>"+m[3].toFixed(2) + '</td><td>'+ m[7].toFixed(2) + '</td><td>'+ m[11].toFixed(2) + '</td><td>'+ m[15].toFixed(2) + '</td></tr>'+
-        "</table>";
-}
 
 
 function main(model) {
@@ -21,24 +12,13 @@ function main(model) {
     gl.clearColor(0,0,0,0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    var projectionMat = p4Matrix();
+    tmat = p4Matrix();
+    tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
+    rx4Matrix(v.r.x,tmat);
+    ry4Matrix(v.r.y,tmat);
+    rz4Matrix(v.r.z,tmat);
 
-    var cam = [v.t.x,v.t.y,v.t.z];
-    var tar = [0,0,0];
-
-    cameraMat = lookAt(cam,tar);
-
-    //var viewMat = invert([],cameraMat);
-    var viewMat = cameraMat;
-
-    var viewProjMat = mProduct(projectionMat,viewMat);
-
-    //var p = vecProd([0,0,0,1],viewProjMat);
-    //document.getElementById("fps").innerHTML = c[0].toFixed(0)+' '+ c[1].toFixed(0)+' '+ c[2].toFixed(0)+':'+p[0].toFixed(0)+' '+ p[1].toFixed(0)+' '+p[2].toFixed(0); 
-   
-   matDebug(viewProjMat);
-
-    gl.uniformMatrix4fv(transform_loc,false,viewProjMat);
+    gl.uniformMatrix4fv(transform_loc,false,tmat);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.useProgram(model.program);
@@ -49,42 +29,33 @@ function main(model) {
   }
 
   var lastFrame = 0;
-  var active = true;
-  var radPerSec	= (Math.PI / 180.0)*180;
+  var active = false;
+  var radPerSec	= Math.PI;
   var fps = 65;
-  var moves = { m: {w:0.5, n:0, z:0},
-                t: {x:0, y:0, z:-50},
-                r: {x:0, y:0, z:0},
-                s: {x:1, y:1, z:1},
-                f: {x:1, y:0, z:0},
-                wt: {x:0, y:0, z:0},
-                wr: {x:0, y:0, z:0}, }
-  moves.wt.x -= model.midx; moves.wt.y -= model.midy; moves.wt.z -= model.midz; moves.t.z -= 42;
+  var keys = {};
+  var moves = { t: {x:0, y:0, z:-60},
+                r: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
-  if (active) window.requestAnimationFrame(run);
-  document.getElementById("c").onclick = function() {
-    active = (active==true? false : true);
-    if (active) window.requestAnimationFrame(run);
-  }
 
   function run(now) {
 
+    if (now - lastFrame > 100) lastFrame = now;
     var dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
 
-      if (keys.up) moves.r.x -= 50*dt;
-      if (keys.down) moves.r.x += 50*dt;
-      if (keys.left) moves.r.y -= 50*dt;
-      if (keys.right) moves.r.y += 50*dt;
-      if (keys.w) moves.t.y += 50*dt;
-      if (keys.s) moves.t.y -= 50*dt;
-      if (keys.a) moves.t.x -= 50*dt;
-      if (keys.d) moves.t.x += 50*dt;
-      if (keys.q) moves.t.z += 50*dt;
-      if (keys.e) moves.t.z -= 50*dt;
-      if (keys.z) moves.r.z += 50*dt;
-      if (keys.x) moves.r.z -= 50*dt;
+      if (keys.up) moves.r.x -= radPerSec*dt;
+      if (keys.down) moves.r.x += radPerSec*dt;
+      if (keys.left) moves.r.y -= radPerSec*dt;
+      if (keys.right) moves.r.y += radPerSec*dt;
+      if (keys.z) moves.r.z += radPerSec*dt;
+      if (keys.x) moves.r.z -= radPerSec*dt;
+      if (keys.w) moves.t.y += 40*dt;
+      if (keys.s) moves.t.y -= 40*dt;
+      if (keys.a) moves.t.x -= 40*dt;
+      if (keys.d) moves.t.x += 40*dt;
+      if (keys.q) moves.t.z += 40*dt;
+      if (keys.e) moves.t.z -= 40*dt;
 
 
       drawFrame(moves);
@@ -93,7 +64,19 @@ function main(model) {
     if (active) window.requestAnimationFrame(run); 
 
   }
-} //end main
+
+  onkeydown = onkeyup = function(e){
+    e = e || event;
+    keys[keycodes[e.keyCode]] = e.type == 'keydown';
+    active = false;
+    for (var key in keys)
+      if (keys[key])
+        active = true;
+    if (active) window.requestAnimationFrame(run);
+  }
+
+
+}
 
 
 
