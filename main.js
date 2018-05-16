@@ -101,13 +101,30 @@ function main() {
 
     for (var i in models){
 
+      projmat = p4Matrix();
+
+      cammat = i4Matrix();
+      rx4Matrix(v.r.x,cammat);
+      ry4Matrix(v.r.y,cammat);
+      rz4Matrix(v.r.z,cammat);
+      tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
+
+      viewmat = i4Matrix();
+      viewmat = invert(viewmat,cammat);
+
+      viewprojmat = mProduct(projmat,viewmat);
+
+      /*
       tmat = p4Matrix();
       tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
       rx4Matrix(v.r.x,tmat);
       ry4Matrix(v.r.y,tmat);
       rz4Matrix(v.r.z,tmat);
-
       gl.uniformMatrix4fv(transform_loc,false,tmat);
+      */
+
+      gl.uniformMatrix4fv(transform_loc,false,viewprojmat);
+
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
       gl.bindVertexArray(models[i].vao);
@@ -118,7 +135,7 @@ function main() {
 
   }
 
-  var moves = { t: {x:0, y:0, z:-60},
+  var moves = { t: {x:0, y:0, z:60},
                 r: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
@@ -279,6 +296,7 @@ function loadBuffers(model){
 function whenLoaded(num){
   setTimeout(()=>{ 
     if (readyCount==num){
+      //center the models and load into buffers
       center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
       for (var i in models){
         console.log(`centering ${i}`);
