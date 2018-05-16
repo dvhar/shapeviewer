@@ -54,6 +54,13 @@ gl.setSize = function(w,h){
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
 var normal_loc = gl.getAttribLocation(program, "a_normal");
+var transform_loc = gl.getUniformLocation(program, "transform");
+var filePath =  "/cw/webgltest/tut/shape/";
+var models = []; readyCount = 0; //14 total
+var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
+var keys = {};
+var rHeight = window.innerHeight * .7;
+var rWidth = Math.floor(rHeight * (16/9));
 
 keycodes = {
   37: 'left',
@@ -79,19 +86,11 @@ keycodes = {
   67: 'c'
 }
 
-var keys = {};
 
 
 
+function main() {
 
-
-
-
-function main(model) {
-
-  var transform_loc = gl.getUniformLocation(program, "transform");
-  rHeight = window.innerHeight * .7;
-  rWidth = Math.floor(rHeight * (16/9));
 
   function drawFrame(v) {
 
@@ -100,31 +99,35 @@ function main(model) {
     gl.clearColor(0,0,0,0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    tmat = p4Matrix();
-    tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
-    rx4Matrix(v.r.x,tmat);
-    ry4Matrix(v.r.y,tmat);
-    rz4Matrix(v.r.z,tmat);
+    for (var i in models){
 
-    gl.uniformMatrix4fv(transform_loc,false,tmat);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    gl.bindVertexArray(model.vao);
-    gl.drawArrays(gl.TRIANGLES, 0, model.verts.length/3);
+      tmat = p4Matrix();
+      tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
+      rx4Matrix(v.r.x,tmat);
+      ry4Matrix(v.r.y,tmat);
+      rz4Matrix(v.r.z,tmat);
+
+      gl.uniformMatrix4fv(transform_loc,false,tmat);
+      gl.enable(gl.CULL_FACE);
+      gl.enable(gl.DEPTH_TEST);
+      gl.bindVertexArray(models[i].vao);
+      gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
+
+    }
 
 
   }
 
-  var lastFrame = 0;
-  var active = false;
-  var radPerSec	= Math.PI;
-  var fps = 65;
-  var keys = {};
   var moves = { t: {x:0, y:0, z:-60},
                 r: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
 
+
+  var lastFrame = 0;
+  var active = false;
+  var radPerSec	= Math.PI;
+  var fps = 65;
   function run(now) {
 
     if (now - lastFrame > 100) lastFrame = now;
@@ -163,14 +166,15 @@ function main(model) {
   }
 
 
+
 }
 
 
 
 
 
-
-function loader (txt) {
+var center = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,count:0 };
+function parseMesh(txt) {
 
   txt = txt.trim() + '\n';
   var model = {};
@@ -180,8 +184,6 @@ function loader (txt) {
   model.verts = [];
   model.norms = [];
   model.colors = [];
-  var hx,lx,hy,ly,hz,lz;
-  var count = 0;
 
   while(posB > posA){
 
@@ -199,8 +201,15 @@ function loader (txt) {
         var z = parseFloat(line[4]);
 
         //set low and high points
-        if (count == 0) { hx=lx=x; hy=ly=y; hz=lz=z; count++; }
-        else {if(x<lx)lx=x;if(y<ly)ly=y;if(z<lz)lz=z;if(x>hx)hx=x;if(y>hy)hy=y;if(z>hz)hz=z;}
+        if (center.count == 0) { center.hx=center.lx=x; center.hy=center.ly=y; center.hz=center.lz=z; center.count++; }
+        else {
+          if (x<center.lx) center.lx=x;
+          if (y<center.ly) center.ly=y;
+          if (z<center.lz) center.lz=z;
+          if (x>center.hx) center.hx=x;
+          if (y>center.hy) center.hy=y;
+          if (z>center.hz) center.hz=z;
+        }
 
         vArr.push(x);
         vArr.push(y);
@@ -241,14 +250,10 @@ function loader (txt) {
     posB = txt.indexOf("\n",posA);
   }
 
-  //center the model
-  let mx=(lx+hx)/2,my=(ly+hy)/2,mz=(lz+hz)/2;
-  for (var x=0; x<model.verts.length; x+=3) {
-    model.verts[x] -= mx;
-    model.verts[x+1] -= my;
-    model.verts[x+2] -= mz;
-  }
+  return model;
+}
 
+function loadBuffers(model){
 
   model.vao = gl.createVertexArray();
   gl.bindVertexArray(model.vao);
@@ -269,39 +274,51 @@ function loader (txt) {
   gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+}
 
-  main(model);
+function whenLoaded(num){
+  setTimeout(()=>{ 
+    if (readyCount==num){
+      center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
+      for (var i in models){
+        console.log(`centering ${i}`);
+        for (var x=0; x<models[i].verts.length; x+=3){
+          models[i].verts[x] -= center.mx;
+          models[i].verts[x+1] -= center.my;
+          models[i].verts[x+2] -= center.mz;
+        }
+        loadBuffers(models[i]);
+      }
+      main(); 
+    }
+    else
+      whenLoaded(num); 
+  },100);
 }
 
 
-
-
-function loadMeshFile(meshFile) {
-  filePath =  "/cw/webgltest/newer/shape/"+meshFile;
-  var meshRequest = new XMLHttpRequest;
-  meshRequest.open("GET", filePath, true);
+function loadMeshFile(fileName) {
+  var meshRequest = new XMLHttpRequest();
+  meshRequest.open("GET", fileName, true);
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
       mesh = meshRequest.responseText;
-      loader(mesh);
-      return mesh;
+      models.push(parseMesh(mesh));
+      readyCount++;
+      console.log(fileName);
     }
-    else return "not found";
   }
   meshRequest.send(null);
 }
 
 
-
-firstFile = sessionStorage.getItem("roi");
-document.getElementById("fps").innerHTML = firstFile;
-firstFile = "resliced_mesh_"+firstFile+".m";
-loadMeshFile(firstFile);
-
-function selectFile(roinum) {
-  sessionStorage.setItem("roi",roinum);
-  location = location;
+for (var x in rois){
+  fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
+  loadMeshFile(fileName);
 }
 
+whenLoaded(rois.length);
 
-
+function selectFile(roinum) {
+  main();
+}
