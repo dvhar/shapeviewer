@@ -51,28 +51,9 @@ gl.setSize = function(w,h){
 }
 
 
-
-function createRequest() {
-  try {
-    request = new XMLHttpRequest();
-  } catch (tryMS) {
-    try {
-      request = new ActiveXObject("Msxml2.XMLHTTP");
-    } catch (otherMS) {
-      try {
-        request = new ActiveXObject("Microsoft.XMLHTTP");
-      } catch (failed) {
-        request = null;
-      }
-    }
-  }	
-  return request;
-}
-
-//initial file
-if (sessionStorage.getItem("roi") === null) sessionStorage.setItem("roi","10");
-
-
+var program = createProgram(gl, vs, fs);
+var positionAttrLoc = gl.getAttribLocation(program, "a_position");
+var normal_loc = gl.getAttribLocation(program, "a_normal");
 
 keycodes = {
   37: 'left',
@@ -108,12 +89,13 @@ var keys = {};
 
 function main(model) {
 
-  var transform_loc = gl.getUniformLocation(model.program, "transform");
+  var transform_loc = gl.getUniformLocation(program, "transform");
   rHeight = window.innerHeight * .7;
   rWidth = Math.floor(rHeight * (16/9));
 
   function drawFrame(v) {
 
+    gl.useProgram(program);
     gl.setSize(rWidth,rHeight);
     gl.clearColor(0,0,0,0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -127,7 +109,6 @@ function main(model) {
     gl.uniformMatrix4fv(transform_loc,false,tmat);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    gl.useProgram(model.program);
     gl.bindVertexArray(model.vao);
     gl.drawArrays(gl.TRIANGLES, 0, model.verts.length/3);
 
@@ -268,11 +249,6 @@ function loader (txt) {
     model.verts[x+2] -= mz;
   }
 
-  //set up model program
-  model.program = createProgram(gl, vs, fs);
-  gl.useProgram(model.program);
-  positionAttrLoc = gl.getAttribLocation(model.program, "a_position");
-  normal_loc = gl.getAttribLocation(model.program, "a_normal");
 
   model.vao = gl.createVertexArray();
   gl.bindVertexArray(model.vao);
@@ -302,7 +278,7 @@ function loader (txt) {
 
 function loadMeshFile(meshFile) {
   filePath =  "/cw/webgltest/newer/shape/"+meshFile;
-  var meshRequest = createRequest();
+  var meshRequest = new XMLHttpRequest;
   meshRequest.open("GET", filePath, true);
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
