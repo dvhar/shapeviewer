@@ -54,7 +54,11 @@ gl.setSize = function(w,h){
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
 var normal_loc = gl.getAttribLocation(program, "a_normal");
-var transform_loc = gl.getUniformLocation(program, "transform");
+var worviewproj_loc = gl.getUniformLocation(program, "u_worldviewprojection");
+var worldinvtrans_loc = gl.getUniformLocation(program, "u_worldinvtrans");
+var world_loc = gl.getUniformLocation(program, "u_world");
+var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
+var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
 var models = []; readyCount = 0; //14 total
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
@@ -101,30 +105,56 @@ function main() {
 
     for (var i in models){
 
-      projmat = p4Matrix();
+      var projmat = p4Matrix();
 
-      cammat = i4Matrix();
-      rx4Matrix(v.r.x,cammat);
-      ry4Matrix(v.r.y,cammat);
-      rz4Matrix(v.r.z,cammat);
+      var cammat = i4Matrix();
       tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
 
-      viewmat = i4Matrix();
+      /*
+      var cameraPosition = [
+           cammat[12],
+           cammat[13],
+           cammat[14],
+         ];
+      cammat = lookAt([models[1].verts[0],models[1].verts[1],models[1].verts[2]],cammat);
+      */
+
+      var viewmat = i4Matrix();
       viewmat = invert(viewmat,cammat);
+      var viewprojmat = mProduct(projmat,viewmat);
 
-      viewprojmat = mProduct(projmat,viewmat);
+      var worldmat = i4Matrix();
+      rx4Matrix(v.r.x,worldmat);
+      ry4Matrix(v.r.y,worldmat);
+      rz4Matrix(v.r.z,worldmat);
 
+      viewprojmat = mProduct(viewprojmat,worldmat);
+
+      var worldinverse = worldmat;
+      var worldinverse = invert(worldinverse);
+      var worldinvtrans = i4Matrix();
+      worldinvtrans = transpose(worldinvtrans,worldinverse);
+
+      var litmat = i4Matrix();
+      tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
+      var litpos = vecProd([20,30,50,1],litmat);
       /*
       tmat = p4Matrix();
       tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
       rx4Matrix(v.r.x,tmat);
       ry4Matrix(v.r.y,tmat);
       rz4Matrix(v.r.z,tmat);
-      gl.uniformMatrix4fv(transform_loc,false,tmat);
+      gl.uniformMatrix4fv(worviewproj_loc,false,tmat);
       */
 
-      gl.uniformMatrix4fv(transform_loc,false,viewprojmat);
+      gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
+      gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
+      gl.uniformMatrix4fv(world_loc,false,worldmat);
+      gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
 
+      //console.log(JSON.stringify(litpos.slice(0,3)));
+
+      gl.uniform3fv(light_loc,normalize([1.0,8.0,7.0,1]));//old l direction
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
       gl.bindVertexArray(models[i].vao);
@@ -136,7 +166,8 @@ function main() {
   }
 
   var moves = { t: {x:0, y:0, z:60},
-                r: {x:0, y:0, z:0}, }
+                r: {x:0, y:0, z:0}, 
+                c: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
 
@@ -164,6 +195,12 @@ function main() {
       if (keys.q) moves.t.z += 40*dt;
       if (keys.e) moves.t.z -= 40*dt;
 
+      if (keys["1"]) moves.c.y += 140*dt;
+      if (keys["2"]) moves.c.y -= 140*dt;
+      if (keys["3"]) moves.c.x -= 140*dt;
+      if (keys["4"]) moves.c.x += 140*dt;
+      if (keys["5"]) moves.c.z += 140*dt;
+      if (keys["6"]) moves.c.z -= 140*dt;
 
       drawFrame(moves);
       lastFrame = now;

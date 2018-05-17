@@ -63,27 +63,38 @@ body {
 
   in vec4 a_position;
   in vec3 a_normal;
-  out vec3 pos_normal;
-  uniform mat4 transform;
+  out vec3 v_normal;
+  out vec3 v_surfacetolite;
+  uniform mat4 u_worldviewprojection;
+  uniform mat4 u_worldinvtrans;
+  uniform mat4 u_world;
+  uniform vec3 u_liteworldpos;
 
   void main() {
-    gl_Position = transform * a_position;
+    gl_Position = u_worldviewprojection * a_position;
 
-    pos_normal = mat3(transform) * a_normal;
+    v_normal = mat3(u_worldinvtrans) * a_normal;
+
+    vec3 surfaceworldpos = (u_world * a_position).xyz;
+
+    v_surfacetolite = u_liteworldpos - surfaceworldpos;
+    v_surfacetolite = normalize(v_surfacetolite);
   }
 
 </script>
 <script id="fs" type="x-shader/x-fragment">#version 300 es
 
   precision mediump float;
-  in vec3 pos_normal;
+  in vec3 v_normal;
+  in vec3 v_surfacetolite;
   out vec4 outColor;
+  uniform vec3 u_litdirection;
 
   void main() { 
 
-    vec4 base_color = vec4(1.5,0.8,0.8,1);
-    float light = dot(pos_normal,vec3(0.1,0.3,-0.7));
-    outColor = sin( vec4(base_color.rbg*light,1) - 0.5*vec4(0, pos_normal.xy, 0) );
+    vec4 base_color = vec4(0.5,0.8,0.8,1);
+    float light = dot(v_normal,v_surfacetolite);
+    outColor = base_color * light;
   }
 
 </script>
