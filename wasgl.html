@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>WebAssembly Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        background-color: black;
+      }
+      #c {
+        border: 2px solid black;
+        width: 40em;
+        height: 30em;
+      }
+      #fps {
+        width: 20em;
+      }
+      #whatFile {
+        width: 2em;
+      }
+      #main {
+        display: block;
+        margin: auto;
+        text-align: center;
+        color: LimeGreen;
+      }
+    </style>
+  </head>
+  <body>
+
+
+
+<div id="main">
+<canvas id="c" width="400" height="400" ></canvas>
+<span id="fps"></span>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+
+  in vec4 a_position;
+  in vec3 a_normal;
+  out vec3 v_normal;
+  out vec3 v_surfacetolite;
+  uniform mat4 u_worldviewprojection;
+  uniform mat4 u_worldinvtrans;
+  uniform mat4 u_world;
+  uniform vec3 u_liteworldpos;
+
+  void main() {
+    gl_Position = u_worldviewprojection * a_position;
+
+    v_normal = mat3(u_worldinvtrans) * a_normal;
+
+    vec3 surfaceworldpos = (u_world * a_position).xyz;
+
+    v_surfacetolite = u_liteworldpos - surfaceworldpos;
+    v_surfacetolite = normalize(v_surfacetolite);
+  }
+
+</script>
+<script id="fs" type="x-shader/x-fragment">#version 300 es
+
+  precision mediump float;
+  in vec3 v_normal;
+  in vec3 v_surfacetolite;
+  out vec4 outColor;
+  uniform vec3 u_litdirection;
+
+  void main() { 
+
+    vec4 base_color = vec4(0.5,0.8,0.8,1);
+    float light = dot(v_normal,v_surfacetolite);
+    outColor = base_color * light;
+  }
+
+</script>
+
+<script src="index.js"></script>
+<script>
+
+
+loadedCount = 0;
+readyCount = 0;
+mesh = "";
+parsedmodel = {};
+
+function process(inn){
+  var ptr  = allocate(intArrayFromString(inn), 'i8', ALLOC_NORMAL);//or 0
+  var vertsp = _sift(ptr);
+  var verts = Pointer_stringify(vertsp);
+
+
+  _free(ptr);
+  _free(vertsp);
+
+  //document.write(verts);
+  parsedmodel = JSON.parse(verts);
+  readyCount++;
+}
+
+function normy(){
+  var normiesp = _getnorms();
+  var normies = Pointer_stringify(normiesp);
+
+  document.write(normies);
+
+  _free(normiesp);
+  return JSON.parse(normies);
+}
+
+
+
+function whenLoaded(num){
+  setTimeout(()=>{ 
+    if (loadedCount==num){
+      console.log("mesh loaded");
+      setTimeout(()=>{process(mesh);},350);
+    }
+    else
+      whenLoaded(num); 
+  },100);
+}
+
+
+
+function loadMeshFile(fileName) {
+  var meshRequest = new XMLHttpRequest();
+  meshRequest.open("GET", fileName, true);
+  meshRequest.onreadystatechange = function() {
+    if (meshRequest.readyState == 4 && meshRequest.status == 200){
+      mesh = meshRequest.responseText;
+      loadedCount++;
+      console.log(fileName);
+    }
+  }
+  meshRequest.send(null);
+}
+
+
+var filePath =  "/cw/wasm/template/";
+var fileName = `${filePath}resliced_mesh_17.m`;
+
+loadMeshFile(fileName);
+
+whenLoaded(1);
+
+
+
+</script>
+<script src="math.js"></script>
+<script src="mainwasm.js"></script>
+
+  </body>
+</html> 

@@ -60,7 +60,7 @@ var world_loc = gl.getUniformLocation(program, "u_world");
 var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
-var models = []; readyCount = 0; //14 total
+var models = [];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
 var rHeight = window.innerHeight * .9;
@@ -110,15 +110,6 @@ function main() {
       var cammat = i4Matrix();
       tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
 
-      /*
-      var cameraPosition = [
-           cammat[12],
-           cammat[13],
-           cammat[14],
-         ];
-      cammat = lookAt([models[1].verts[0],models[1].verts[1],models[1].verts[2]],cammat);
-      */
-
       var viewmat = i4Matrix();
       viewmat = invert(viewmat,cammat);
       var viewprojmat = mProduct(projmat,viewmat);
@@ -138,27 +129,17 @@ function main() {
       var litmat = i4Matrix();
       tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
       var litpos = vecProd([20,30,50,1],litmat);
-      /*
-      tmat = p4Matrix();
-      tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
-      rx4Matrix(v.r.x,tmat);
-      ry4Matrix(v.r.y,tmat);
-      rz4Matrix(v.r.z,tmat);
-      gl.uniformMatrix4fv(worviewproj_loc,false,tmat);
-      */
 
       gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
       gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
       gl.uniformMatrix4fv(world_loc,false,worldmat);
       gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
 
-      //console.log(JSON.stringify(litpos.slice(0,3)));
-
       gl.uniform3fv(light_loc,normalize([1.0,8.0,7.0,1]));//old l direction
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
       gl.bindVertexArray(models[i].vao);
-      gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
+      gl.drawArrays(gl.TRIANGLES, 0, models[i][0].length/3);
 
     }
 
@@ -227,85 +208,6 @@ function main() {
 
 
 
-var center = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,count:0 };
-function parseMesh(txt) {
-
-  txt = txt.trim() + '\n';
-  var model = {};
-  var posA = 0;
-  var posB = txt.indexOf("\n",0);
-  var vArr = ['',];
-  model.verts = [];
-  model.norms = [];
-  model.colors = [];
-
-  while(posB > posA){
-
-    var line = txt.substring(posA,posB).trim();
-
-    switch(line.charAt(0)){
-      // Sample Data
-      //Vertex 1 140.753 133.406 99.9389 
-      //Face 5000 2499 2501 2502
-
-      case "V":
-        line = line.split(" ");
-        var x = parseFloat(line[2]);
-        var y = parseFloat(line[3]);
-        var z = parseFloat(line[4]);
-
-        //set low and high points
-        if (center.count == 0) { center.hx=center.lx=x; center.hy=center.ly=y; center.hz=center.lz=z; center.count++; }
-        else {
-          if (x<center.lx) center.lx=x;
-          if (y<center.ly) center.ly=y;
-          if (z<center.lz) center.lz=z;
-          if (x>center.hx) center.hx=x;
-          if (y>center.hy) center.hy=y;
-          if (z>center.hz) center.hz=z;
-        }
-
-        vArr.push(x);
-        vArr.push(y);
-        vArr.push(z);
-        break;
-
-      case "F":
-        line = line.split(" ");
-        var x1 =vArr[line[2]*3-2];
-        var y1 =vArr[line[2]*3-1];
-        var z1 =vArr[line[2]*3];
-        var x2 =vArr[line[3]*3-2];
-        var y2 =vArr[line[3]*3-1];
-        var z2 =vArr[line[3]*3];
-        var x3 =vArr[line[4]*3-2];
-        var y3 =vArr[line[4]*3-1];
-        var z3 =vArr[line[4]*3];
-
-        model.verts.push(x1);
-        model.verts.push(y1);
-        model.verts.push(z1);
-
-        model.verts.push(x2);
-        model.verts.push(y2);
-        model.verts.push(z2);
-
-        model.verts.push(x3);
-        model.verts.push(y3);
-        model.verts.push(z3);
-
-        var norm = triNorm(x1,y1,z1,x2,y2,z2,x3,y3,z3);
-        model.norms = model.norms.concat(norm);
-        model.norms = model.norms.concat(norm);
-        model.norms = model.norms.concat(norm); break;
-
-    }
-    posA = posB+1;
-    posB = txt.indexOf("\n",posA);
-  }
-
-  return model;
-}
 
 function loadBuffers(model){
 
@@ -314,7 +216,7 @@ function loadBuffers(model){
   //ready position buffer
   model.positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.verts), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model[0]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(positionAttrLoc);
   gl.vertexAttribPointer(positionAttrLoc, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -323,57 +225,35 @@ function loadBuffers(model){
   //ready normal buffer
   model.normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.normalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.norms), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model[1]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(normal_loc);
   gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 }
 
-function whenLoaded(num){
+
+function whenparsed(num){
   setTimeout(()=>{ 
     if (readyCount==num){
-      //center the models and load into buffers
-      center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
+      model={};
+      model[0] = parsedmodel[0];
+      model[1] = parsedmodel[1];
+      models.push(parsedmodel);
+      //document.write(JSON.stringify(models[0]));
       for (var i in models){
-        console.log(`centering ${i}`);
-        for (var x=0; x<models[i].verts.length; x+=3){
-          models[i].verts[x] -= center.mx;
-          models[i].verts[x+1] -= center.my;
-          models[i].verts[x+2] -= center.mz;
+        for (var x=0; x<models[i][0].length; x+=3){
+          models[i][0][x] -= parsedmodel[2][0];
+          models[i][0][x+1] -= parsedmodel[2][1];
+          models[i][0][x+2] -= parsedmodel[2][2];
         }
-        loadBuffers(models[i]);
       }
+      loadBuffers(models[i]);
       main(); 
-    }
+      }
     else
-      whenLoaded(num); 
+      whenparsed(num); 
   },100);
 }
 
-
-function loadMeshFile(fileName) {
-  var meshRequest = new XMLHttpRequest();
-  meshRequest.open("GET", fileName, true);
-  meshRequest.onreadystatechange = function() {
-    if (meshRequest.readyState == 4 && meshRequest.status == 200){
-      mesh = meshRequest.responseText;
-      models.push(parseMesh(mesh));
-      readyCount++;
-      console.log(fileName);
-    }
-  }
-  meshRequest.send(null);
-}
-
-
-for (var x in rois){
-  fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
-  loadMeshFile(fileName);
-}
-
-whenLoaded(rois.length);
-
-function selectFile(roinum) {
-  main();
-}
+whenparsed(1);
