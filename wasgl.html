@@ -80,10 +80,6 @@
 <script>
 
 
-loadedCount = 0;
-readyCount = 0;
-mesh = "";
-parsedmodel = {};
 
 function process(inn){
   var ptr  = allocate(intArrayFromString(inn), 'i8', ALLOC_NORMAL);//or 0
@@ -92,58 +88,13 @@ function process(inn){
 
 
   _free(ptr);
-  _free(vertsp);
+  //_free(vertsp);
 
-  //document.write(verts);
-  parsedmodel = JSON.parse(verts);
-  readyCount++;
-}
-
-function normy(){
-  var normiesp = _getnorms();
-  var normies = Pointer_stringify(normiesp);
-
-  document.write(normies);
-
-  _free(normiesp);
-  return JSON.parse(normies);
+  document.write(verts);
+  return JSON.parse(verts);
 }
 
 
-
-function whenLoaded(num){
-  setTimeout(()=>{ 
-    if (loadedCount==num){
-      console.log("mesh loaded");
-      setTimeout(()=>{process(mesh);},350);
-    }
-    else
-      whenLoaded(num); 
-  },100);
-}
-
-
-
-function loadMeshFile(fileName) {
-  var meshRequest = new XMLHttpRequest();
-  meshRequest.open("GET", fileName, true);
-  meshRequest.onreadystatechange = function() {
-    if (meshRequest.readyState == 4 && meshRequest.status == 200){
-      mesh = meshRequest.responseText;
-      loadedCount++;
-      console.log(fileName);
-    }
-  }
-  meshRequest.send(null);
-}
-
-
-var filePath =  "/cw/wasm/template/";
-var fileName = `${filePath}resliced_mesh_17.m`;
-
-loadMeshFile(fileName);
-
-whenLoaded(1);
 
 
 

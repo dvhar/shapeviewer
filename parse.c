@@ -8,11 +8,6 @@ int main(int argc, char ** argv) {
     printf("WebAssembly module loaded\n");
 }
 
-char vertices[2505][100];
-int nn=0;
-char normals[9505][300];
-
-
 char * norm (char * a) {
   double va = atof(strtok(a,","));
   double vb = atof(strtok(NULL,","));
@@ -41,16 +36,23 @@ char * norm (char * a) {
   double mag = sqrt(pxxx * pxxx + pyyy * pyyy + pzzz * pzzz);
   if (mag){
     ox = pxxx/mag; oy = pyyy/mag; oz= pzzz/mag;
-    sprintf(a,"%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,",ox,oy,oz,ox,oy,oz,ox,oy,oz);
+    sprintf(a,"%3.4f,%3.4f,%3.4f, %3.4f,%3.4f,%3.4f, %3.4f,%3.4f,%3.4f, ",ox,oy,oz,ox,oy,oz,ox,oy,oz);
   }else
-    strcpy(a,"0,0,0,0,0,0,0,0,0");
+    strcpy(a,"0,0,0,0,0,0,0,0,0,");
 
   return a;
 }
 
 
 
+
 char * EMSCRIPTEN_KEEPALIVE sift (char * a) {
+
+  char vertices[2505][100];
+  //int nn=0;
+  //char normals[9505][300];
+
+
   int i=0;
   int len = strlen(a);
   char * out = malloc ( 2* len * sizeof(char));
@@ -126,7 +128,17 @@ char * EMSCRIPTEN_KEEPALIVE sift (char * a) {
   zz=(hz+lz)/2.0;
   out[strlen(out)-2]='\0';
   outn[strlen(outn)-2]='\0';
+
+  char subuf[500];
+  memcpy(subuf,&outn[0],499);
+  subuf[499]='\0';
+  printf("%s\n",subuf);
+
   sprintf(outr,"[[%s],[%s],[%3.4f,%3.4f,%3.4f]]",out,outn,xx,yy,zz);
+
+  free(outr);
+  free(outn);
+
   return outr;
 }
 

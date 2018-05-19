@@ -60,8 +60,9 @@ var world_loc = gl.getUniformLocation(program, "u_world");
 var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
-var models = [];
-var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
+var models = []; readyCount = 0; //14 total
+var rois = [13];
+//var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
 var rHeight = window.innerHeight * .9;
 var rWidth = Math.floor(rHeight * (16/9));
@@ -139,7 +140,7 @@ function main() {
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
       gl.bindVertexArray(models[i].vao);
-      gl.drawArrays(gl.TRIANGLES, 0, models[i][0].length/3);
+      gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
 
     }
 
@@ -216,7 +217,7 @@ function loadBuffers(model){
   //ready position buffer
   model.positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model[0]), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.verts), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(positionAttrLoc);
   gl.vertexAttribPointer(positionAttrLoc, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -225,7 +226,7 @@ function loadBuffers(model){
   //ready normal buffer
   model.normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.normalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model[1]), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.norms), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(normal_loc);
   gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -233,27 +234,53 @@ function loadBuffers(model){
 }
 
 
-function whenparsed(num){
+function whenLoaded(num){
   setTimeout(()=>{ 
     if (readyCount==num){
-      model={};
-      model[0] = parsedmodel[0];
-      model[1] = parsedmodel[1];
-      models.push(parsedmodel);
       //document.write(JSON.stringify(models[0]));
       for (var i in models){
-        for (var x=0; x<models[i][0].length; x+=3){
-          models[i][0][x] -= parsedmodel[2][0];
-          models[i][0][x+1] -= parsedmodel[2][1];
-          models[i][0][x+2] -= parsedmodel[2][2];
+        for (var x=0; x<models[i].verts.length; x+=3){
+          models[i].verts[x] -= parsedmodel[2][0];
+          models[i].verts[x+1] -= parsedmodel[2][1];
+          models[i].verts[x+2] -= parsedmodel[2][2];
         }
-      }
       loadBuffers(models[i]);
+      }
       main(); 
       }
     else
-      whenparsed(num); 
+      whenLoaded(num); 
   },100);
 }
 
-whenparsed(1);
+
+function loadMeshFile(fileName) {
+  var meshRequest = new XMLHttpRequest();
+  meshRequest.open("GET", fileName, true);
+  meshRequest.onreadystatechange = function() {
+    if (meshRequest.readyState == 4 && meshRequest.status == 200){
+      mesh = meshRequest.responseText;
+      parsedmodel = process(mesh);
+      model={};
+      model.verts = parsedmodel[0];
+      model.norms = parsedmodel[1];
+      models.push(model);
+      readyCount++;
+      console.log(fileName);
+    }
+  }
+  meshRequest.send(null);
+}
+
+setTimeout(()=>{
+    console.log("running");
+    for (var x in rois){
+      fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
+      loadMeshFile(fileName);
+    }
+  },2000);
+
+whenLoaded(rois.length);
+
+
+
