@@ -82,18 +82,36 @@
 
 
 function process(inn){
-  var ptr  = allocate(intArrayFromString(inn), 'i8', ALLOC_NORMAL);//or 0
-  var vertsp = _sift(ptr);
-  var verts = Pointer_stringify(vertsp);
+  var textp  = allocate(intArrayFromString(inn), 'i8', ALLOC_NORMAL);//or 0
+  
+  var fArray = new Float32Array(50000);
+  var nArray = new Float32Array(50000);
 
+  var fArrayp = Module._malloc(fArray.length * fArray.BYTES_PER_ELEMENT);
+  var nArrayp = Module._malloc(fArray.length * fArray.BYTES_PER_ELEMENT);
 
-  _free(ptr);
-  //_free(vertsp);
+  //this is for sending floats to wasm, don't need it
+  //Module.HEAPF32.set(fArray,fArrayp>>2);
+  //Module.HEAPF32.set(nArray,nArrayp>>2);
 
+  var fArraylen = _parse(textp,fArrayp,fArray.length,nArrayp);
+
+  var fArrayIndex = fArrayp/Float32Array.BYTES_PER_ELEMENT;
+  var nArrayIndex = nArrayp/Float32Array.BYTES_PER_ELEMENT;
+
+  fArray = Module.HEAPF32.slice(fArrayIndex,fArrayIndex+fArraylen);
+  nArray = Module.HEAPF32.slice(nArrayIndex,nArrayIndex+fArraylen);
+
+  document.write(JSON.stringify(fArray));
+  document.write(JSON.stringify(nArray));
+  console.log(`fArray len: ${fArray.length}`);
+
+  _free(textp);
+
+  console.log("process js done");
   //document.write(verts);
-  vertsa = JSON.parse(verts);
   //document.write(`${vertsa[0].length} ${vertsa[1].length} ${vertsa[2].length}`);
-  return vertsa;
+  return fArraylen;
 }
 
 

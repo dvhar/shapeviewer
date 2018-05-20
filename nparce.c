@@ -11,8 +11,9 @@ int main(int argc, char ** argv) {
 
 int gindex=0;
 int ncalls=0;
+char normies[1000000];
 
-void norm (double va,double vb,double vc,double vd,double ve,double vf,double vg,double vh,double vi,double*norms){
+void norm (double va,double vb,double vc,double vd,double ve,double vf,double vg,double vh,double vi){
 
   double px = vd - va;
   double py = ve - vb;
@@ -35,9 +36,7 @@ void norm (double va,double vb,double vc,double vd,double ve,double vf,double vg
     ox=0;oy=0;oz=0;
   }
 
-  norms[gindex++] = ox;
-  norms[gindex++] = oy;
-  norms[gindex++] = oz;
+  sprintf(normies+strlen(normies),"%1.4f,%1.4f,%1.4f,%1.4f,%1.4f,%1.4f,%1.4f,%1.4f,%1.4f,",ox,oy,oz,ox,oy,oz,ox,oy,oz);
 
 }
 
@@ -46,16 +45,14 @@ void norm (double va,double vb,double vc,double vd,double ve,double vf,double vg
 
 char * EMSCRIPTEN_KEEPALIVE sift (char * a) {
 
-  //printf("starting parse in c\n");
 
   double biglist[50000];
-  double normlist[50000];
   memset(biglist,0,sizeof(biglist));
-  memset(normlist,0,sizeof(normlist));
 
   int len = strlen(a), ini=1,i=0,veci,v,vv,vvv;
   char * out = malloc (2*len * sizeof(char));
   strcpy(out,"[[");
+  strcpy(normies,"");
   
   char * endline, *endword;
   char * line = strtok_r(a,"\n",&endline);
@@ -105,7 +102,7 @@ char * EMSCRIPTEN_KEEPALIVE sift (char * a) {
             zzz = biglist[vvv];
         sprintf(out+strlen(out),"%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,%3.4f,",x,y,z,xx,yy,zz,xxx,yyy,zzz);
 
-        norm(x,y,z,xx,yy,zz,xxx,yyy,zzz,normlist);
+        norm(x,y,z,xx,yy,zz,xxx,yyy,zzz);
         break;
     }
 
@@ -119,12 +116,7 @@ char * EMSCRIPTEN_KEEPALIVE sift (char * a) {
   out[strlen(out)-1]=']';
   sprintf(out+strlen(out),",[");
 
-  //printf("sprintf loop\n");
-  for (i=0;i<gindex-1;i+=3){
-    sprintf(out+strlen(out),"%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,",normlist[i],normlist[i+1],normlist[i+2],normlist[i],normlist[i+1],normlist[i+2],normlist[i],normlist[i+1],normlist[i+2]);
-  }
-  //printf("loop done\n");
-
+  strcat(out,normies);
   out[strlen(out)-1]=']';
   sprintf(out+strlen(out),",[%3.4f,%3.4f,%3.4f]]",x,y,z);
 
