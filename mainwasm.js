@@ -61,8 +61,8 @@ var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
 var models = []; readyCount = 0; //14 total
-var rois = [13];
-//var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
+//var rois = [13];
+var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
 var rHeight = window.innerHeight * .9;
 var rWidth = Math.floor(rHeight * (16/9));
@@ -217,7 +217,7 @@ function loadBuffers(model){
   //ready position buffer
   model.positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.verts), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, model.verts, gl.STATIC_DRAW);
   gl.enableVertexAttribArray(positionAttrLoc);
   gl.vertexAttribPointer(positionAttrLoc, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -226,7 +226,7 @@ function loadBuffers(model){
   //ready normal buffer
   model.normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.normalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.norms), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, model.norms, gl.STATIC_DRAW);
   gl.enableVertexAttribArray(normal_loc);
   gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -237,12 +237,13 @@ function loadBuffers(model){
 function whenLoaded(num){
   setTimeout(()=>{ 
     if (readyCount==num){
+      center = getcenter();
       //document.write(JSON.stringify(models[0]));
       for (var i in models){
         for (var x=0; x<models[i].verts.length; x+=3){
-          models[i].verts[x] -= parsedmodel[2][0];
-          models[i].verts[x+1] -= parsedmodel[2][1];
-          models[i].verts[x+2] -= parsedmodel[2][2];
+          models[i].verts[x] -= center[0];
+          models[i].verts[x+1] -= center[1];
+          models[i].verts[x+2] -= center[2];
         }
       loadBuffers(models[i]);
       }
@@ -260,10 +261,16 @@ function loadMeshFile(fileName) {
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
       mesh = meshRequest.responseText;
+      
+      model={};
+      process(mesh,model);
+      /*
       parsedmodel = process(mesh);
+      getcenter();
       model={};
       model.verts = parsedmodel[0];
       model.norms = parsedmodel[1];
+      */
       models.push(model);
       readyCount++;
       console.log(fileName);

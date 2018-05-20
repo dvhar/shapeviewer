@@ -9,6 +9,7 @@ int main(int argc, char ** argv) {
 }
 
 int nindex=0;
+int ncalls=0;
 
 void norm (float va,float vb,float vc,float vd,float ve,float vf,float vg,float vh,float vi,float*norms){
 
@@ -43,6 +44,7 @@ void norm (float va,float vb,float vc,float vd,float ve,float vf,float vg,float 
 
 }
 
+float hx,lx,hy,ly,hz,lz;
 
 int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float*normArray) {
 
@@ -54,8 +56,9 @@ int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float
   int len = strlen(a), vindex=1,i=0,vi=0,v,vv,vvv;
   char * endline, *endword;
   char * line = strtok_r(a,"\n",&endline);
-  float x,y,z,xx,yy,zz,xxx,yyy,zzz,hx,lx,hy,ly,hz,lz;
+  float x,y,z,xx,yy,zz,xxx,yyy,zzz;
   nindex=0;
+  ncalls++;
 
   while (line != NULL){
     line = strtok_r(NULL,"\n",&endline);
@@ -66,15 +69,15 @@ int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float
         strtok_r(NULL," ",&endword);
           xx = atof(strtok_r(NULL," ",&endword));
             biglist[vindex++] = xx;
-            if (vindex==2) hx=lx=xx;
+            if (vindex==2 && ncalls==0) hx=lx=xx;
             else { if (xx<lx) lx = xx; if (xx>hx) hx = xx; }
           xx = atof(strtok_r(NULL," ",&endword));
             biglist[vindex++] = xx;
-            if (vindex==3) hy=ly=xx;
+            if (vindex==3 && ncalls==0) hy=ly=xx;
             else { if (xx<ly) ly = xx; if (xx>hy) hy = xx; }
           xx = atof(strtok_r(NULL," ",&endword));
             biglist[vindex++] = xx;
-            if (vindex==4) hz=lz=xx;
+            if (vindex==4 && ncalls==0) hz=lz=xx;
             else { if (xx<lz) lz = xx; if (xx>hz) hz = xx; }
         break;
 
@@ -108,11 +111,13 @@ int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float
     }
 
   } //loop
-  x=(hx+lx)/2.0;
-  y=(hy+ly)/2.0;
-  z=(hz+lz)/2.0;
 
-  printf("c parsing done\n");
   return vi;
+}
+
+void getcenter (float*center){
+  center[0] = (lx+hx)/2.0;
+  center[1] = (ly+hy)/2.0;
+  center[2] = (lz+hz)/2.0;
 }
 
