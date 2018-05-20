@@ -266,7 +266,7 @@ function loadMeshFile(fileName) {
       model.norms = parsedmodel[1];
       models.push(model);
       readyCount++;
-      console.log(fileName);
+      //console.log(fileName);
     }
   }
   meshRequest.send(null);
