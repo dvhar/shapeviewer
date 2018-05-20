@@ -61,8 +61,8 @@ var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
 var models = []; readyCount = 0; //14 total
-var rois = [17];
-//var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
+//var rois = [11];
+var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
 var rHeight = window.innerHeight * .9;
 var rWidth = Math.floor(rHeight * (16/9));

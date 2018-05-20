@@ -90,10 +90,10 @@ function process(inn){
   _free(ptr);
   //_free(vertsp);
 
-  document.write(verts);
+  //document.write(verts);
   vertsa = JSON.parse(verts);
-  document.write(`${vertsa[0].length} ${vertsa[1].length} ${vertsa[2].length}`);
-  return JSON.parse(verts);
+  //document.write(`${vertsa[0].length} ${vertsa[1].length} ${vertsa[2].length}`);
+  return vertsa;
 }
 
 
