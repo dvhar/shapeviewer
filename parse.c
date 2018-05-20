@@ -1,11 +1,12 @@
-#include <stdio.h>
+//#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <emscripten/emscripten.h>
 
 int main(int argc, char ** argv) {
-    printf("WebAssembly module loaded\n");
+    //printf("WebAssembly module loaded\n");
+    int a=0;
 }
 
 int nindex=0;
@@ -46,7 +47,7 @@ void norm (float va,float vb,float vc,float vd,float ve,float vf,float vg,float 
 
 float hx,lx,hy,ly,hz,lz;
 
-int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float*normArray) {
+int parse (char*a, float*vertArray, int vertArrayLen, float*normArray) {
 
 
   float biglist[50000];
@@ -58,7 +59,6 @@ int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float
   char * line = strtok_r(a,"\n",&endline);
   float x,y,z,xx,yy,zz,xxx,yyy,zzz;
   nindex=0;
-  ncalls++;
 
   while (line != NULL){
     line = strtok_r(NULL,"\n",&endline);
@@ -69,15 +69,18 @@ int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float
         strtok_r(NULL," ",&endword);
           xx = atof(strtok_r(NULL," ",&endword));
             biglist[vindex++] = xx;
-            if (vindex==2 && ncalls==0) hx=lx=xx;
+            if (vi==0 && ncalls==0) hx=lx=xx;
+
             else { if (xx<lx) lx = xx; if (xx>hx) hx = xx; }
           xx = atof(strtok_r(NULL," ",&endword));
             biglist[vindex++] = xx;
-            if (vindex==3 && ncalls==0) hy=ly=xx;
+            if (vi==0 && ncalls==0) hy=ly=xx;
+
             else { if (xx<ly) ly = xx; if (xx>hy) hy = xx; }
           xx = atof(strtok_r(NULL," ",&endword));
             biglist[vindex++] = xx;
-            if (vindex==4 && ncalls==0) hz=lz=xx;
+            if (vi==0 && ncalls==0) hz=lz=xx;
+
             else { if (xx<lz) lz = xx; if (xx>hz) hz = xx; }
         break;
 
@@ -112,6 +115,7 @@ int EMSCRIPTEN_KEEPALIVE parse (char*a, float*vertArray, int vertArrayLen, float
 
   } //loop
 
+  ncalls++;
   return vi;
 }
 

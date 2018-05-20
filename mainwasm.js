@@ -261,19 +261,11 @@ function loadMeshFile(fileName) {
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
       mesh = meshRequest.responseText;
-      
       model={};
       process(mesh,model);
-      /*
-      parsedmodel = process(mesh);
-      getcenter();
-      model={};
-      model.verts = parsedmodel[0];
-      model.norms = parsedmodel[1];
-      */
       models.push(model);
       readyCount++;
-      console.log(fileName);
+      //console.log(fileName);
     }
   }
   meshRequest.send(null);
@@ -285,7 +277,7 @@ setTimeout(()=>{
       fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
       loadMeshFile(fileName);
     }
-  },1000);
+  },800);
 
 whenLoaded(rois.length);
 

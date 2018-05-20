@@ -2,7 +2,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>WebAssembly Example</title>
+    <title>Shape wgl wasm</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body {
@@ -102,14 +102,8 @@ function process(mesh,model){
   fArray = Module.HEAPF32.slice(fArrayIndex,fArrayIndex+fArraylen);
   nArray = Module.HEAPF32.slice(nArrayIndex,nArrayIndex+fArraylen);
 
-  //document.write(JSON.stringify(fArray));
-  //document.write(JSON.stringify(nArray));
-
   _free(textp);
 
-  //document.write(verts);
-  //document.write(`${vertsa[0].length} ${vertsa[1].length} ${vertsa[2].length}`);
-  //return fArraylen;
   model.verts = fArray;
   model.norms = nArray;
 }
@@ -120,7 +114,7 @@ function getcenter(){
   _getcenter(centerp);
   cindex = centerp/Float32Array.BYTES_PER_ELEMENT;
   center = Module.HEAPF32.slice(cindex,cindex+3);
-  console.log(JSON.stringify(center));
+  //console.log(JSON.stringify(center));
   return center;
 }
 
