@@ -129,7 +129,7 @@ function main() {
 
       var litmat = i4Matrix();
       tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
-      var litpos = vecProd([20,30,50,1],litmat);
+      var litpos = vecProd([10,-10,90,1],litmat);
 
       gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
       gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
@@ -147,7 +147,7 @@ function main() {
 
   }
 
-  var moves = { t: {x:0, y:0, z:60},
+  var moves = { t: {x:0, y:0, z:90},
                 r: {x:0, y:0, z:0}, 
                 c: {x:0, y:0, z:0}, }
 
@@ -238,7 +238,6 @@ function whenLoaded(num){
   setTimeout(()=>{ 
     if (readyCount==num){
       center = getcenter();
-      //document.write(JSON.stringify(models[0]));
       for (var i in models){
         for (var x=0; x<models[i].verts.length; x+=3){
           models[i].verts[x] -= center[0];
@@ -251,7 +250,7 @@ function whenLoaded(num){
       }
     else
       whenLoaded(num); 
-  },100);
+  },50);
 }
 
 
@@ -265,7 +264,6 @@ function loadMeshFile(fileName) {
       process(mesh,model);
       models.push(model);
       readyCount++;
-      //console.log(fileName);
     }
   }
   meshRequest.send(null);

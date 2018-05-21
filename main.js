@@ -94,6 +94,7 @@ keycodes = {
 
 
 function main() {
+  console.log('main started');
 
 
   function drawFrame(v) {
@@ -178,6 +179,7 @@ function main() {
   var fps = 65;
   function run(now) {
 
+    console.log('running');
     if (now - lastFrame > 100) lastFrame = now;
     var dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
@@ -228,16 +230,15 @@ function main() {
 
 
 var center = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,count:0 };
-function parseMesh(txt) {
+function parseMesh(txt,model) {
 
   txt = txt.trim() + '\n';
-  var model = {};
   var posA = 0;
   var posB = txt.indexOf("\n",0);
   var vArr = ['',];
-  model.verts = [];
-  model.norms = [];
-  model.colors = [];
+  var verts = [];
+  var norms = [];
+  let ind,vi=0,ni=0;
 
   while(posB > posA){
 
@@ -265,56 +266,69 @@ function parseMesh(txt) {
           if (z>center.hz) center.hz=z;
         }
 
-        vArr.push(x);
-        vArr.push(y);
-        vArr.push(z);
+        vArr.push(x,y,z);
         break;
 
       case "F":
         line = line.split(" ");
-        var x1 =vArr[line[2]*3-2];
-        var y1 =vArr[line[2]*3-1];
-        var z1 =vArr[line[2]*3];
-        var x2 =vArr[line[3]*3-2];
-        var y2 =vArr[line[3]*3-1];
-        var z2 =vArr[line[3]*3];
-        var x3 =vArr[line[4]*3-2];
-        var y3 =vArr[line[4]*3-1];
-        var z3 =vArr[line[4]*3];
+        ind = line[2]*3;
+        var x1 =vArr[ind-2];
+        var y1 =vArr[ind-1];
+        var z1 =vArr[ind];
+        ind = line[3]*3;
+        var x2 =vArr[ind-2];
+        var y2 =vArr[ind-1];
+        var z2 =vArr[ind];
+        ind = line[4]*3;
+        var x3 =vArr[ind-2];
+        var y3 =vArr[ind-1];
+        var z3 =vArr[ind];
 
-        model.verts.push(x1);
-        model.verts.push(y1);
-        model.verts.push(z1);
-
-        model.verts.push(x2);
-        model.verts.push(y2);
-        model.verts.push(z2);
-
-        model.verts.push(x3);
-        model.verts.push(y3);
-        model.verts.push(z3);
+        //model.verts.push(x1,y1,z1,x2,y2,z2,x3,y3,z3);
+        verts[vi++] = x1;
+        verts[vi++] = y1;
+        verts[vi++] = z1;
+        verts[vi++] = x2;
+        verts[vi++] = y2;
+        verts[vi++] = z2;
+        verts[vi++] = x3;
+        verts[vi++] = y3;
+        verts[vi++] = z3;
 
         var norm = triNorm(x1,y1,z1,x2,y2,z2,x3,y3,z3);
-        model.norms = model.norms.concat(norm);
-        model.norms = model.norms.concat(norm);
-        model.norms = model.norms.concat(norm); break;
+        norms[ni++] = norm[0];
+        norms[ni++] = norm[1];
+        norms[ni++] = norm[2];
+        norms[ni++] = norm[0];
+        norms[ni++] = norm[1];
+        norms[ni++] = norm[2];
+        norms[ni++] = norm[0];
+        norms[ni++] = norm[1];
+        norms[ni++] = norm[2];
+        break;
 
     }
     posA = posB+1;
     posB = txt.indexOf("\n",posA);
   }
 
+  model.verts = new Float32Array(verts.slice(0,vi));
+  model.norms = new Float32Array(norms.slice(0,vi));
+
+
   return model;
 }
 
 function loadBuffers(model){
+
+  document.write(JSON.stringify(model));
 
   model.vao = gl.createVertexArray();
   gl.bindVertexArray(model.vao);
   //ready position buffer
   model.positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.verts), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, model.verts, gl.STATIC_DRAW);
   gl.enableVertexAttribArray(positionAttrLoc);
   gl.vertexAttribPointer(positionAttrLoc, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -323,7 +337,7 @@ function loadBuffers(model){
   //ready normal buffer
   model.normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.normalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.norms), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, model.norms, gl.STATIC_DRAW);
   gl.enableVertexAttribArray(normal_loc);
   gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -342,8 +356,10 @@ function whenLoaded(num){
           models[i].verts[x+1] -= center.my;
           models[i].verts[x+2] -= center.mz;
         }
+        console.log('calling loadbuffers');
         loadBuffers(models[i]);
       }
+      console.log('calling main');
       main(); 
     }
     else
@@ -358,7 +374,9 @@ function loadMeshFile(fileName) {
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
       mesh = meshRequest.responseText;
-      models.push(parseMesh(mesh));
+      model = {};
+      parseMesh(mesh,model);
+      models.push(model);
       readyCount++;
       console.log(fileName);
     }

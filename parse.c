@@ -9,7 +9,6 @@ int main(int argc, char ** argv) {
 }
 
 int nindex=0;
-int ncalls=0;
 
 void norm (float va,float vb,float vc,float vd,float ve,float vf,float vg,float vh,float vi,float*norms){
 
@@ -45,15 +44,16 @@ void norm (float va,float vb,float vc,float vd,float ve,float vf,float vg,float 
 }
 
 float hx,lx,hy,ly,hz,lz;
+int firstcall = 1;
 
 int parse (char*a, float*vertArray, int vertArrayLen, float*normArray) {
 
 
-  float biglist[50000];
-  //memset(biglist,0,sizeof(biglist));
+  float templist[50000];
+  //memset(templist,0,sizeof(templist));
   //memset(vertArray,0,vertArrayLen);
   //memset(normArray,0,vertArrayLen);
-  int len = strlen(a), vindex=1,i=0,vi=0,v,vv,vvv;
+  int len = strlen(a), vindex=1,i=0,vi=0,v;
   char * endline, *endword;
   char * line = strtok_r(a,"\n",&endline);
   float x,y,z,xx,yy,zz,xxx,yyy,zzz;
@@ -66,38 +66,38 @@ int parse (char*a, float*vertArray, int vertArrayLen, float*normArray) {
       case 'V':
         strtok_r(line," \n",&endword);
         strtok_r(NULL," ",&endword);
-          xx = atof(strtok_r(NULL," ",&endword));
-            biglist[vindex++] = xx;
-            if (vi==0 && ncalls==0) hx=lx=xx;
+          x = atof(strtok_r(NULL," ",&endword));
+            templist[vindex++] = x;
+            if (vi==0 && firstcall) hx=lx=x;
 
-            else { if (xx<lx) lx = xx; if (xx>hx) hx = xx; }
-          xx = atof(strtok_r(NULL," ",&endword));
-            biglist[vindex++] = xx;
-            if (vi==0 && ncalls==0) hy=ly=xx;
+            else { if (x<lx) lx = x; if (x>hx) hx = x; }
+          x = atof(strtok_r(NULL," ",&endword));
+            templist[vindex++] = x;
+            if (vi==0 && firstcall) hy=ly=x;
 
-            else { if (xx<ly) ly = xx; if (xx>hy) hy = xx; }
-          xx = atof(strtok_r(NULL," ",&endword));
-            biglist[vindex++] = xx;
-            if (vi==0 && ncalls==0) hz=lz=xx;
+            else { if (x<ly) ly = x; if (x>hy) hy = x; }
+          x = atof(strtok_r(NULL," ",&endword));
+            templist[vindex++] = x;
+            if (vi==0 && firstcall) hz=lz=x;
 
-            else { if (xx<lz) lz = xx; if (xx>hz) hz = xx; }
+            else { if (x<lz) lz = x; if (x>hz) hz = x; }
         break;
 
       case 'F':
         strtok_r(line," ",&endword);
         strtok_r(NULL," ",&endword);
           v = 3*atoi(strtok_r(NULL," ",&endword));
-            x = biglist[v-2];
-            y = biglist[v-1];
-            z = biglist[v];
-          vv = 3*atoi(strtok_r(NULL," ",&endword));
-            xx = biglist[vv-2];
-            yy = biglist[vv-1];
-            zz = biglist[vv];
-          vvv = 3*atoi(strtok_r(NULL," ",&endword));
-            xxx = biglist[vvv-2];
-            yyy = biglist[vvv-1];
-            zzz = biglist[vvv];
+            x = templist[v-2];
+            y = templist[v-1];
+            z = templist[v];
+          v = 3*atoi(strtok_r(NULL," ",&endword));
+            xx = templist[v-2];
+            yy = templist[v-1];
+            zz = templist[v];
+          v = 3*atoi(strtok_r(NULL," ",&endword));
+            xxx = templist[v-2];
+            yyy = templist[v-1];
+            zzz = templist[v];
         vertArray[vi++] = x;
         vertArray[vi++] = y;
         vertArray[vi++] = z;
@@ -114,7 +114,9 @@ int parse (char*a, float*vertArray, int vertArrayLen, float*normArray) {
 
   } //loop
 
-  ncalls++;
+  firstcall = 0;
+
+  //returns vertex array length
   return vi;
 }
 
