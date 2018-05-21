@@ -271,14 +271,20 @@ function loadMeshFile(fileName) {
   meshRequest.send(null);
 }
 
-setTimeout(()=>{
-    //console.log("running");
-    for (var x in rois){
-      fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
-      loadMeshFile(fileName);
-    }
-  },800);
+function whenWasmReady(){
+  setTimeout(()=>{
+      if (wasmready){
+        for (var x in rois){
+          fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
+          loadMeshFile(fileName);
+        }
+      }
+      else
+        whenWasmReady();
+    },50);
+}
 
+whenWasmReady();
 whenLoaded(rois.length);
 
 

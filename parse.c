@@ -5,8 +5,7 @@
 #include <emscripten/emscripten.h>
 
 int main(int argc, char ** argv) {
-    //printf("WebAssembly module loaded\n");
-    int a=0;
+  emscripten_run_script("wasmloaded()");
 }
 
 int nindex=0;
