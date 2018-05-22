@@ -111,15 +111,6 @@ function main() {
       var cammat = i4Matrix();
       tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
 
-      /*
-      var cameraPosition = [
-           cammat[12],
-           cammat[13],
-           cammat[14],
-         ];
-      cammat = lookAt([models[1].verts[0],models[1].verts[1],models[1].verts[2]],cammat);
-      */
-
       var viewmat = i4Matrix();
       viewmat = invert(viewmat,cammat);
       var viewprojmat = mProduct(projmat,viewmat);
@@ -139,14 +130,6 @@ function main() {
       var litmat = i4Matrix();
       tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
       var litpos = vecProd([20,30,50,1],litmat);
-      /*
-      tmat = p4Matrix();
-      tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
-      rx4Matrix(v.r.x,tmat);
-      ry4Matrix(v.r.y,tmat);
-      rz4Matrix(v.r.z,tmat);
-      gl.uniformMatrix4fv(worviewproj_loc,false,tmat);
-      */
 
       gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
       gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
@@ -166,7 +149,7 @@ function main() {
 
   }
 
-  var moves = { t: {x:0, y:0, z:60},
+  var moves = { t: {x:0, y:0, z:90},
                 r: {x:0, y:0, z:0}, 
                 c: {x:0, y:0, z:0}, }
 
@@ -224,7 +207,6 @@ function main() {
 
 
 }
-
 
 
 
@@ -314,14 +296,15 @@ function parseMesh(txt,model) {
 
   model.verts = new Float32Array(verts.slice(0,vi));
   model.norms = new Float32Array(norms.slice(0,vi));
+  model.len = vi;
 
 
   return model;
 }
 
 function loadBuffers(model){
+  console.log(`loading buffers for model len ${model.len}`);
 
-  document.write(JSON.stringify(model));
 
   model.vao = gl.createVertexArray();
   gl.bindVertexArray(model.vao);
@@ -351,19 +334,21 @@ function whenLoaded(num){
       center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
       for (var i in models){
         console.log(`centering ${i}`);
-        for (var x=0; x<models[i].verts.length; x+=3){
+        for (var x=0; x<models[i].len; x+=3){
           models[i].verts[x] -= center.mx;
           models[i].verts[x+1] -= center.my;
           models[i].verts[x+2] -= center.mz;
         }
-        console.log('calling loadbuffers');
         loadBuffers(models[i]);
       }
-      console.log('calling main');
+      //document.write(JSON.stringify(models[1]));
+      console.log(`not skipping. rc: ${readyCount}`);
       main(); 
     }
-    else
+    else {
       whenLoaded(num); 
+      console.log(`skipping. rc: ${readyCount}`);
+    }
   },100);
 }
 
@@ -391,7 +376,3 @@ for (var x in rois){
 }
 
 whenLoaded(rois.length);
-
-function selectFile(roinum) {
-  main();
-}
