@@ -94,7 +94,6 @@ keycodes = {
 
 
 function main() {
-  console.log('main started');
 
 
   function drawFrame(v) {
@@ -162,7 +161,6 @@ function main() {
   var fps = 65;
   function run(now) {
 
-    console.log('running');
     if (now - lastFrame > 100) lastFrame = now;
     var dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
@@ -294,8 +292,8 @@ function parseMesh(txt,model) {
     posB = txt.indexOf("\n",posA);
   }
 
-  model.verts = new Float32Array(verts.slice(0,vi));
-  model.norms = new Float32Array(norms.slice(0,vi));
+  model.verts = new Float32Array(verts);
+  model.norms = new Float32Array(norms);
   model.len = vi;
 
 
@@ -303,7 +301,6 @@ function parseMesh(txt,model) {
 }
 
 function loadBuffers(model){
-  console.log(`loading buffers for model len ${model.len}`);
 
 
   model.vao = gl.createVertexArray();
@@ -333,7 +330,6 @@ function whenLoaded(num){
       //center the models and load into buffers
       center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
       for (var i in models){
-        console.log(`centering ${i}`);
         for (var x=0; x<models[i].len; x+=3){
           models[i].verts[x] -= center.mx;
           models[i].verts[x+1] -= center.my;
@@ -341,13 +337,10 @@ function whenLoaded(num){
         }
         loadBuffers(models[i]);
       }
-      //document.write(JSON.stringify(models[1]));
-      console.log(`not skipping. rc: ${readyCount}`);
       main(); 
     }
     else {
       whenLoaded(num); 
-      console.log(`skipping. rc: ${readyCount}`);
     }
   },100);
 }
@@ -363,7 +356,6 @@ function loadMeshFile(fileName) {
       parseMesh(mesh,model);
       models.push(model);
       readyCount++;
-      console.log(fileName);
     }
   }
   meshRequest.send(null);
