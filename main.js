@@ -58,6 +58,8 @@ var worviewproj_loc = gl.getUniformLocation(program, "u_worldviewprojection");
 var worldinvtrans_loc = gl.getUniformLocation(program, "u_worldinvtrans");
 var world_loc = gl.getUniformLocation(program, "u_world");
 var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
+var litecolor_loc = gl.getUniformLocation(program, "u_litcolor");
+var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
 var models = []; readyCount = 0; //14 total
@@ -134,10 +136,11 @@ function main() {
       gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
       gl.uniformMatrix4fv(world_loc,false,worldmat);
       gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
+      gl.uniform3fv(litecolor_loc,[1.0,0.6,1.0]);
 
       //console.log(JSON.stringify(litpos.slice(0,3)));
 
-      gl.uniform3fv(light_loc,normalize([1.0,8.0,7.0,1]));//old l direction
+      gl.uniform3fv(viewworldpos_loc,[0,0,0]);//old l direction
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
       gl.bindVertexArray(models[i].vao);

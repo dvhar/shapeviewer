@@ -41,10 +41,12 @@ body {
   in vec3 a_normal;
   out vec3 v_normal;
   out vec3 v_surfacetolite;
+  out vec3 v_surfacetoview;
   uniform mat4 u_worldviewprojection;
   uniform mat4 u_worldinvtrans;
   uniform mat4 u_world;
   uniform vec3 u_liteworldpos;
+  uniform vec3 u_viewworldpos;
 
   void main() {
     gl_Position = u_worldviewprojection * a_position;
@@ -55,6 +57,8 @@ body {
 
     v_surfacetolite = u_liteworldpos - surfaceworldpos;
     v_surfacetolite = normalize(v_surfacetolite);
+
+    v_surfacetoview = u_viewworldpos - surfaceworldpos;
   }
 
 </script>
@@ -63,14 +67,26 @@ body {
   precision mediump float;
   in vec3 v_normal;
   in vec3 v_surfacetolite;
+  in vec3 v_surfacetoview;
   out vec4 outColor;
   uniform vec3 u_litdirection;
+  uniform vec3 u_litcolor;
 
   void main() { 
 
-    vec4 base_color = vec4(0.5,0.8,0.8,1);
+    vec3 surfaceToLightDir = normalize(v_surfacetolite);
+    vec3 surfaceToViewDir = normalize(v_surfacetoview);
+    vec3 halfVector = normalize(surfaceToLightDir - surfaceToViewDir);
+
+    vec4 base_color = vec4(0.6,0.5,0.5,1);
+
     float light = dot(v_normal,v_surfacetolite);
-    outColor = base_color * light;
+    float specular = dot(v_normal,halfVector);
+    specular = pow(specular,3.0);
+
+    base_color.rgb *= u_litcolor;
+
+    outColor = base_color * light + specular * 0.7;
   }
 
 </script>
