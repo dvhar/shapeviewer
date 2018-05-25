@@ -59,6 +59,8 @@ var worldinvtrans_loc = gl.getUniformLocation(program, "u_worldinvtrans");
 var world_loc = gl.getUniformLocation(program, "u_world");
 var liteworldpos_loc = gl.getUniformLocation(program, "u_liteworldpos");
 var litecolor_loc = gl.getUniformLocation(program, "u_litcolor");
+var specularcolor_loc = gl.getUniformLocation(program, "u_specularcolor");
+var basecolor_loc = gl.getUniformLocation(program, "u_basecolor");
 var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
@@ -136,7 +138,10 @@ function main() {
       gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
       gl.uniformMatrix4fv(world_loc,false,worldmat);
       gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
-      gl.uniform3fv(litecolor_loc,[1.0,0.6,1.0]);
+      gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
+      gl.uniform3fv(specularcolor_loc,[1.0,1.0,0.5]);
+      gl.uniform3fv(basecolor_loc,[0.8,0.5,0.5]);
+    //vec4 u_basecolor = vec4(0.6,0.5,0.5,1);
 
       //console.log(JSON.stringify(litpos.slice(0,3)));
 
