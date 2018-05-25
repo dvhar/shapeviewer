@@ -79,16 +79,17 @@ body {
     vec3 surfaceToLightDir = normalize(v_surfacetolite);
     vec3 surfaceToViewDir = normalize(v_surfacetoview);
     vec3 halfVector = normalize(surfaceToLightDir - surfaceToViewDir);
-    vec4 base_color = vec4(u_basecolor,1);
+    vec3 mix_color = u_basecolor;
 
     float light = dot(v_normal,v_surfacetolite);
     float specular = dot(v_normal,halfVector);
-    specular = pow(specular,3.0);
+    specular = pow(specular,32.0);
 
-    base_color.rgb *= u_litcolor * light;
-    base_color.rgb += specular * u_specularcolor;
+    mix_color *= u_litcolor * light;
+    mix_color += specular * u_specularcolor;
+    mix_color.rgb += vec3(v_normal.r * .25, v_normal.g * .1, v_normal.b * .2);
 
-    outColor = base_color;
+    outColor = vec4(mix_color,1);
   }
 
 </script>

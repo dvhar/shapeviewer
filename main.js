@@ -68,7 +68,7 @@ var models = []; readyCount = 0; //14 total
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
-var rHeight = window.innerHeight * .9;
+var rHeight = window.innerHeight * .95;
 var rWidth = Math.floor(rHeight * (16/9));
 
 keycodes = {
@@ -133,15 +133,16 @@ function main() {
 
       var litmat = i4Matrix();
       tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
-      var litpos = vecProd([20,30,50,1],litmat);
+      var litpos = vecProd([20,30,90,1],litmat);
 
       gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
       gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
       gl.uniformMatrix4fv(world_loc,false,worldmat);
       gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
       gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
-      gl.uniform3fv(specularcolor_loc,[1.0,1.0,0.5]);
-      gl.uniform3fv(basecolor_loc,[0.8,0.5,0.5]);
+      gl.uniform3fv(specularcolor_loc,[0.9,0.9,0.5]);
+      gl.uniform3fv(basecolor_loc,models[i].color);
+      //gl.uniform3fv(basecolor_loc,[0.8,0.5,0.5]);
     //vec4 u_basecolor = vec4(0.6,0.5,0.5,1);
 
       //console.log(JSON.stringify(litpos.slice(0,3)));
@@ -216,9 +217,26 @@ function main() {
 }
 
 
+var roicolors = [
+  [0.3,0.8,0.9],
+  [0.4,0.8,0.7],
+  [0.5,0.8,0.5],
+  [0.9,0.5,0.2],
+  [0.3,0.8,0.8],
+  [0.4,0.5,0.2],
+  [0.8,0.2,0.8],
+  [0.2,0.3,0.6],
+  [0.8,0.9,0.9],
+  [0.5,0.6,0.3],
+  [0.4,0.8,0.5],
+  [0.5,0.4,0.9],
+  [0.9,0.7,0.4],
+  [0.4,0.3,0.6]
+];
 
 
 var center = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,count:0 };
+rn=0;
 function parseMesh(txt,model) {
 
   txt = txt.trim() + '\n';
@@ -265,25 +283,25 @@ function parseMesh(txt,model) {
         line = line.split(" ");
 
         vert = line[2];
-        ind = vert*3;
-        var x1 =vArr[ind-2];
-        var y1 =vArr[ind-1];
-        var z1 =vArr[ind];
         sharedverts[vert].push((findex++)*3);
+        ind = vert*3;
+        var x1 = vArr[ind-2];
+        var y1 = vArr[ind-1];
+        var z1 = vArr[ind];
 
         vert = line[3];
-        ind = vert*3;
-        var x2 =vArr[ind-2];
-        var y2 =vArr[ind-1];
-        var z2 =vArr[ind];
         sharedverts[vert].push((findex++)*3);
+        ind = vert*3;
+        var x2 = vArr[ind-2];
+        var y2 = vArr[ind-1];
+        var z2 = vArr[ind];
 
         vert = line[4];
-        ind = vert*3;
-        var x3 =vArr[ind-2];
-        var y3 =vArr[ind-1];
-        var z3 =vArr[ind];
         sharedverts[vert].push((findex++)*3);
+        ind = vert*3;
+        var x3 = vArr[ind-2];
+        var y3 = vArr[ind-1];
+        var z3 = vArr[ind];
 
         verts[vi++] = x1;
         verts[vi++] = y1;
@@ -340,6 +358,7 @@ function parseMesh(txt,model) {
 
   model.verts = new Float32Array(verts);
   model.norms = new Float32Array(norms);
+  model.color = roicolors[rn++];
   return model;
 }
 
