@@ -65,6 +65,7 @@ var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var filePath =  "/cw/webgltest/tut/shape/";
 var models = []; readyCount = 0; //14 total
+//var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
 var rHeight = window.innerHeight * .9;
@@ -226,7 +227,8 @@ function parseMesh(txt,model) {
   var vArr = ['',];
   var verts = [];
   var norms = [];
-  let ind,vi=0,ni=0;
+  var sharedverts = {};
+  let nindex,mag,ind,vi=0,ni=0,findex=0,newnormx,newnormy,newnormz;
 
   while(posB > posA){
 
@@ -242,6 +244,8 @@ function parseMesh(txt,model) {
         var x = parseFloat(line[2]);
         var y = parseFloat(line[3]);
         var z = parseFloat(line[4]);
+
+        sharedverts[parseInt(line[1])] = [];
 
         //set low and high points
         if (center.count == 0) { center.hx=center.lx=x; center.hy=center.ly=y; center.hz=center.lz=z; center.count++; }
@@ -259,20 +263,28 @@ function parseMesh(txt,model) {
 
       case "F":
         line = line.split(" ");
-        ind = line[2]*3;
+
+        vert = line[2];
+        ind = vert*3;
         var x1 =vArr[ind-2];
         var y1 =vArr[ind-1];
         var z1 =vArr[ind];
-        ind = line[3]*3;
+        sharedverts[vert].push((findex++)*3);
+
+        vert = line[3];
+        ind = vert*3;
         var x2 =vArr[ind-2];
         var y2 =vArr[ind-1];
         var z2 =vArr[ind];
-        ind = line[4]*3;
+        sharedverts[vert].push((findex++)*3);
+
+        vert = line[4];
+        ind = vert*3;
         var x3 =vArr[ind-2];
         var y3 =vArr[ind-1];
         var z3 =vArr[ind];
+        sharedverts[vert].push((findex++)*3);
 
-        //model.verts.push(x1,y1,z1,x2,y2,z2,x3,y3,z3);
         verts[vi++] = x1;
         verts[vi++] = y1;
         verts[vi++] = z1;
@@ -300,11 +312,34 @@ function parseMesh(txt,model) {
     posB = txt.indexOf("\n",posA);
   }
 
-  model.verts = new Float32Array(verts);
-  model.norms = new Float32Array(norms);
   model.len = vi;
 
+  //make smooth vertex normals from discreet tri normals
+  for (var sv in sharedverts){
+    newnormx = 0.0;
+    newnormy = 0.0;
+    newnormz = 0.0;
+    for (var si in sharedverts[sv]){
+      nindex = sharedverts[sv][si];
+      newnormx += norms[nindex];
+      newnormy += norms[nindex+1];
+      newnormz += norms[nindex+2];
+    }
 
+    mag = Math.sqrt(newnormx* newnormx+ newnormy* newnormy+ newnormz* newnormz);
+    if (mag != 0) { newnormx /= mag; newnormy /= mag; newnormz /= mag; }
+    else { newnormx = 0.0; newnormy = 0.0; newnormz = 0.0; }
+
+    for (var si in sharedverts[sv]){
+      nindex = sharedverts[sv][si];
+      norms[nindex] = newnormx;
+      norms[nindex+1] = newnormy;
+      norms[nindex+2] = newnormz;
+    }
+  }
+
+  model.verts = new Float32Array(verts);
+  model.norms = new Float32Array(norms);
   return model;
 }
 
