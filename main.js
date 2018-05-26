@@ -92,7 +92,9 @@ keycodes = {
   56: '8',
   90: 'z',
   88: 'x',
-  67: 'c'
+  67: 'c',
+  82: 'r',
+  70: 'f'
 }
 
 
@@ -124,6 +126,12 @@ function main() {
       ry4Matrix(v.r.y,worldmat);
       rz4Matrix(v.r.z,worldmat);
 
+      var mm = models[i].center;
+      var mx = mm[0] * v.m.x; 
+      var my = mm[1] * v.m.x; 
+      var mz = mm[2] * v.m.x; 
+      tr4Matrix(mx,my,mz,worldmat);
+
       viewprojmat = mProduct(viewprojmat,worldmat);
 
       var worldinverse = worldmat.slice(0,worldmat.length);;
@@ -142,11 +150,8 @@ function main() {
       gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
       gl.uniform3fv(specularcolor_loc,[0.9,0.9,0.5]);
       gl.uniform3fv(basecolor_loc,models[i].color);
-      //gl.uniform3fv(basecolor_loc,[0.8,0.5,0.5]);
-    //vec4 u_basecolor = vec4(0.6,0.5,0.5,1);
 
       //console.log(JSON.stringify(litpos.slice(0,3)));
-
       gl.uniform3fv(viewworldpos_loc,[0,0,0]);//old l direction
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
@@ -160,7 +165,8 @@ function main() {
 
   var moves = { t: {x:0, y:0, z:90},
                 r: {x:0, y:0, z:0}, 
-                c: {x:0, y:0, z:0}, }
+                c: {x:0, y:0, z:0},
+                m: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
 
@@ -187,6 +193,8 @@ function main() {
       if (keys.d) moves.t.x += 40*dt;
       if (keys.q) moves.t.z += 40*dt;
       if (keys.e) moves.t.z -= 40*dt;
+      if (keys.r) moves.m.x += 2*dt;
+      if (keys.f) moves.m.x -= 2*dt;
 
       if (keys["1"]) moves.c.y += 140*dt;
       if (keys["2"]) moves.c.y -= 140*dt;
@@ -245,6 +253,7 @@ function parseMesh(txt,model) {
   var vArr = ['',];
   var verts = [];
   var norms = [];
+  var m = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,c:0 };
   var sharedverts = {};
   let nindex,mag,ind,vi=0,ni=0,findex=0,newnormx,newnormy,newnormz;
 
@@ -265,7 +274,17 @@ function parseMesh(txt,model) {
 
         sharedverts[parseInt(line[1])] = [];
 
-        //set low and high points
+        //set low and high points for this model
+        if (m.c == 0) { m.hx=m.lx=x; m.hy=m.ly=y; m.hz=m.lz=z; m.c++; }
+        else {
+          if (x<m.lx) m.lx=x;
+          if (y<m.ly) m.ly=y;
+          if (z<m.lz) m.lz=z;
+          if (x>m.hx) m.hx=x;
+          if (y>m.hy) m.hy=y;
+          if (z>m.hz) m.hz=z;
+        }
+        //set low and high points for all models
         if (center.count == 0) { center.hx=center.lx=x; center.hy=center.ly=y; center.hz=center.lz=z; center.count++; }
         else {
           if (x<center.lx) center.lx=x;
@@ -331,6 +350,7 @@ function parseMesh(txt,model) {
   }
 
   model.len = vi;
+  model.center = [(m.hx+m.lx)/2.0,(m.hy+m.ly)/2.0,(m.hz+m.lz)/2.0];
 
   //make smooth vertex normals from discreet tri normals
   for (var sv in sharedverts){
@@ -392,6 +412,9 @@ function whenLoaded(num){
       //center the models and load into buffers
       center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
       for (var i in models){
+        models[i].center[0] -= center.mx;
+        models[i].center[1] -= center.my;
+        models[i].center[2] -= center.mz;
         for (var x=0; x<models[i].len; x+=3){
           models[i].verts[x] -= center.mx;
           models[i].verts[x+1] -= center.my;
