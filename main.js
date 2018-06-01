@@ -54,6 +54,7 @@ gl.setSize = function(w,h){
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
 var normal_loc = gl.getAttribLocation(program, "a_normal");
+var tnormal_loc = gl.getAttribLocation(program, "a_tnormal");
 var worviewproj_loc = gl.getUniformLocation(program, "u_worldviewprojection");
 var worldinvtrans_loc = gl.getUniformLocation(program, "u_worldinvtrans");
 var world_loc = gl.getUniformLocation(program, "u_world");
@@ -63,14 +64,20 @@ var specularcolor_loc = gl.getUniformLocation(program, "u_specularcolor");
 var basecolor_loc = gl.getUniformLocation(program, "u_basecolor");
 var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
-var filePath =  "/cw/webgltest/tut/shape/";
+var normtype_loc = gl.getUniformLocation(program, "u_normtype");
+var filePath =  "/cw/webgltest/ctrl/shape/";
 var models = []; readyCount = 0; //14 total
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var keys = {};
 var rHeight = window.innerHeight * .95;
 var rWidth = Math.floor(rHeight * (16/9));
-
+var ntype = 0.0;
+document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
+var moves = { t: {x:0, y:0, z:90},
+              r: {x:0, y:0, z:0}, 
+              c: {x:0, y:0, z:0},
+              m: {x:0, y:0.0, z:0}, }
 keycodes = {
   37: 'left',
   38: 'up',
@@ -96,12 +103,15 @@ keycodes = {
   82: 'r',
   70: 'f'
 }
+onkeydown = onkeyup = function(e){
+  e = e || event;
+  keys[keycodes[e.keyCode]] = e.type == 'keydown';
+}
 
 
 
 
 function main() {
-
 
   function drawFrame(v) {
 
@@ -109,6 +119,7 @@ function main() {
     gl.setSize(rWidth,rHeight);
     gl.clearColor(0,0,0,0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 
     for (var i in models){
 
@@ -127,10 +138,7 @@ function main() {
       rz4Matrix(v.r.z,worldmat);
 
       var mm = models[i].center;
-      var mx = mm[0] * v.m.x; 
-      var my = mm[1] * v.m.x; 
-      var mz = mm[2] * v.m.x; 
-      tr4Matrix(mx,my,mz,worldmat);
+      tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,worldmat);
 
       viewprojmat = mProduct(viewprojmat,worldmat);
 
@@ -150,8 +158,8 @@ function main() {
       gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
       gl.uniform3fv(specularcolor_loc,[0.9,0.9,0.5]);
       gl.uniform3fv(basecolor_loc,models[i].color);
+      gl.uniform1f(normtype_loc,ntype);
 
-      //console.log(JSON.stringify(litpos.slice(0,3)));
       gl.uniform3fv(viewworldpos_loc,[0,0,0]);//old l direction
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
@@ -159,20 +167,13 @@ function main() {
       gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
 
     }
-
-
   }
 
-  var moves = { t: {x:0, y:0, z:90},
-                r: {x:0, y:0, z:0}, 
-                c: {x:0, y:0, z:0},
-                m: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
 
 
   var lastFrame = 0;
-  var active = false;
   var radPerSec	= Math.PI;
   var fps = 65;
   function run(now) {
@@ -195,7 +196,6 @@ function main() {
       if (keys.e) moves.t.z -= 40*dt;
       if (keys.r) moves.m.x += 2*dt;
       if (keys.f) moves.m.x -= 2*dt;
-
       if (keys["1"]) moves.c.y += 140*dt;
       if (keys["2"]) moves.c.y -= 140*dt;
       if (keys["3"]) moves.c.x -= 140*dt;
@@ -206,20 +206,9 @@ function main() {
       drawFrame(moves);
       lastFrame = now;
     }
-    if (active) window.requestAnimationFrame(run); 
-
+    window.requestAnimationFrame(run); 
   }
-
-  onkeydown = onkeyup = function(e){
-    e = e || event;
-    keys[keycodes[e.keyCode]] = e.type == 'keydown';
-    active = false;
-    for (var key in keys)
-      if (keys[key])
-        active = true;
-    if (active) window.requestAnimationFrame(run);
-  }
-
+  window.requestAnimationFrame(run);
 
 
 }
@@ -253,6 +242,7 @@ function parseMesh(txt,model) {
   var vArr = ['',];
   var verts = [];
   var norms = [];
+  var tnorms = [];
   var m = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,c:0 };
   var sharedverts = {};
   let nindex,mag,ind,vi=0,ni=0,findex=0,newnormx,newnormy,newnormz;
@@ -333,15 +323,15 @@ function parseMesh(txt,model) {
         verts[vi++] = z3;
 
         var norm = triNorm(x1,y1,z1,x2,y2,z2,x3,y3,z3);
-        norms[ni++] = norm[0];
-        norms[ni++] = norm[1];
-        norms[ni++] = norm[2];
-        norms[ni++] = norm[0];
-        norms[ni++] = norm[1];
-        norms[ni++] = norm[2];
-        norms[ni++] = norm[0];
-        norms[ni++] = norm[1];
-        norms[ni++] = norm[2];
+        tnorms[ni++] = norm[0];
+        tnorms[ni++] = norm[1];
+        tnorms[ni++] = norm[2];
+        tnorms[ni++] = norm[0];
+        tnorms[ni++] = norm[1];
+        tnorms[ni++] = norm[2];
+        tnorms[ni++] = norm[0];
+        tnorms[ni++] = norm[1];
+        tnorms[ni++] = norm[2];
         break;
 
     }
@@ -359,9 +349,9 @@ function parseMesh(txt,model) {
     newnormz = 0.0;
     for (var si in sharedverts[sv]){
       nindex = sharedverts[sv][si];
-      newnormx += norms[nindex];
-      newnormy += norms[nindex+1];
-      newnormz += norms[nindex+2];
+      newnormx += tnorms[nindex];
+      newnormy += tnorms[nindex+1];
+      newnormz += tnorms[nindex+2];
     }
 
     mag = Math.sqrt(newnormx* newnormx+ newnormy* newnormy+ newnormz* newnormz);
@@ -378,6 +368,7 @@ function parseMesh(txt,model) {
 
   model.verts = new Float32Array(verts);
   model.norms = new Float32Array(norms);
+  model.tnorms = new Float32Array(tnorms);
   model.color = roicolors[rn++];
   return model;
 }
@@ -395,13 +386,20 @@ function loadBuffers(model){
   gl.vertexAttribPointer(positionAttrLoc, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-
-  //ready normal buffer
+  //ready vertex normal buffer
   model.normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.normalBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, model.norms, gl.STATIC_DRAW);
   gl.enableVertexAttribArray(normal_loc);
   gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+  //ready triangle normal buffer
+  model.tnormalBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, model.tnormalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, model.tnorms, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(tnormal_loc);
+  gl.vertexAttribPointer(tnormal_loc, 3, gl.FLOAT, true, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 }

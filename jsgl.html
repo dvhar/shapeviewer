@@ -1,6 +1,5 @@
 <head>
 <title>Simple Shape Viewer</title>
-<!-- This is a hacked together elaboration of my webgl2 hello-world program, but it works. Just put the resliced_mesh files in the files directory and point a web server at it. -->
 <style>
 body {
   background-color: black;
@@ -28,10 +27,16 @@ body {
   max-width: 30em;
   margin: auto;
 }
+#nbut {
+  background-color: black;
+  color: green;
+  border: 2px solid green;
+}
 </style>
 </head>
 <div id="main">
 <canvas id="c" width="400" height="400" ></canvas>
+<button id="nbut">change norms</button>
 <br>
 <span id="fps"></span>
 
@@ -39,6 +44,7 @@ body {
 
   in vec4 a_position;
   in vec3 a_normal;
+  in vec3 a_tnormal;
   out vec3 v_normal;
   out vec3 v_surfacetolite;
   out vec3 v_surfacetoview;
@@ -47,16 +53,17 @@ body {
   uniform mat4 u_world;
   uniform vec3 u_liteworldpos;
   uniform vec3 u_viewworldpos;
+  uniform float u_normtype;
 
   void main() {
     gl_Position = u_worldviewprojection * a_position;
 
-    v_normal = mat3(u_worldinvtrans) * a_normal;
+    v_normal = mat3(u_worldinvtrans) *  normalize(a_tnormal * u_normtype + a_normal * (1.0 - u_normtype));
 
-    vec3 surfaceworldpos = (u_world * a_position).xyz;
+    //vec3 surfaceworldpos = vec3(u_worldviewprojection * a_position).xyz;  //moves past light
+    vec3 surfaceworldpos = (u_world * a_position).xyz;   //moves with light
 
-    v_surfacetolite = u_liteworldpos - surfaceworldpos;
-    v_surfacetolite = normalize(v_surfacetolite);
+    v_surfacetolite = normalize( u_liteworldpos - surfaceworldpos );
 
     v_surfacetoview = u_viewworldpos - surfaceworldpos;
   }
@@ -83,7 +90,7 @@ body {
 
     float light = dot(v_normal,v_surfacetolite);
     float specular = dot(v_normal,halfVector);
-    specular = pow(specular,32.0);
+    specular = pow(specular,128.0);
 
     mix_color *= u_litcolor * light;
     mix_color += specular * u_specularcolor;
