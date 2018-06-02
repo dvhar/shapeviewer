@@ -74,10 +74,13 @@ var keys = {};
 var rHeight = window.innerHeight * .9;
 var rWidth = Math.floor(rHeight * (16/9));
 var ntype = 0.0;
+var dt = 0;
 var moves = { t: {x:0, y:0, z:90},
               r: {x:0, y:0, z:0}, 
               c: {x:0, y:0, z:0},
-              m: {x:0, y:0.0, z:0}, }
+
+              m: {x:0, y:0.0, z:0},
+              g: {x:0, y:0.0, z:0}, }
 keycodes = {
   37: 'left',
   38: 'up',
@@ -117,6 +120,32 @@ function colorall(models){
 }
 document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
+
+
+//mouse grabbing
+function mover(e){
+  movex = e.clientX - oldx;
+  movey = e.clientY - oldy;
+  moves.r.y -= 0.5*movex*dt;
+  moves.r.x += 0.5*movey*dt;
+  oldx = e.clientX;
+  oldy = e.clientY;
+  document.getElementById("fps").innerHTML = `${oldx} --- ${movex} --- ${e.clientX}`;
+}
+
+function dropper(e){
+  document.removeEventListener("mousup",dropper);
+  document.removeEventListener("mousemove",mover);
+}
+
+function grabber(e){
+  oldx = e.clientX;
+  oldy = e.clientY;
+  document.addEventListener("mousemove",mover);
+  document.addEventListener("mouseup",dropper);
+}
+canvas.addEventListener("mousedown",grabber);
+canvas.addEventListener("touchstart",()=>{console.log("touchy");});
 
 
 
@@ -190,7 +219,7 @@ function main() {
   function run(now) {
 
     if (now - lastFrame > 100) lastFrame = now;
-    var dt = (now - lastFrame)/1000;
+    dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
 
       if (keys.up) moves.r.x -= radPerSec*dt;
