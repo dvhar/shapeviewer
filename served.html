@@ -1,5 +1,6 @@
 <head>
 <title>Simple Shape Viewer</title>
+<!-- This is a hacked together elaboration of my webgl2 hello-world program, but it works. Just put the resliced_mesh files in the files directory and point a web server at it. -->
 <style>
 body {
   background-color: black;
@@ -59,9 +60,10 @@ body {
     gl_Position = u_worldviewprojection * a_position;
 
     v_normal = mat3(u_worldinvtrans) *  normalize(a_tnormal * u_normtype + a_normal * (1.0 - u_normtype));
+    //v_normal = mat3(u_worldinvtrans) * a_normal;
 
     //vec3 surfaceworldpos = vec3(u_worldviewprojection * a_position).xyz;  //moves past light
-    vec3 surfaceworldpos = (u_world * a_position).xyz;   //moves with light
+    vec3 surfaceworldpos = (u_world * a_position).xyz;
 
     v_surfacetolite = normalize( u_liteworldpos - surfaceworldpos );
 
@@ -100,6 +102,6 @@ body {
   }
 
 </script>
-<script src="math.js"></script>
-<script src="main.js"></script>
+<script src="/scripts/main.js"></script>
+<script src="/scripts/math.js"></script>
 

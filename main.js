@@ -65,7 +65,7 @@ var basecolor_loc = gl.getUniformLocation(program, "u_basecolor");
 var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
-var filePath =  "/cw/webgltest/ctrl/shape/";
+var filePath =  "/mesh/";
 var models = []; readyCount = 0; //14 total
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
