@@ -110,6 +110,8 @@ onkeydown = onkeyup = function(e){
   e = e || event;
   keys[keycodes[e.keyCode]] = e.type == 'keydown';
 }
+
+//toggle button for color
 function colorgen(model){
   for (let h=0; h<3; h++)
     model.color[h] = Math.random();
@@ -118,34 +120,37 @@ function colorall(models){
   for (let h=0; h<14; h++)
     colorgen(models[h]);
 }
-document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
+document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
 
 
-//mouse grabbing
+//mouse and touchscreen moving
 function mover(e){
-  movex = e.clientX - oldx;
-  movey = e.clientY - oldy;
+  movex = ((e.clientX || e.changedTouches[0].clientX) - oldx);
+  movey = ((e.clientY || e.changedTouches[0].clientY) - oldy);
   moves.r.y -= 0.5*movex*dt;
   moves.r.x += 0.5*movey*dt;
-  oldx = e.clientX;
-  oldy = e.clientY;
-  document.getElementById("fps").innerHTML = `${oldx} --- ${movex} --- ${e.clientX}`;
+  oldx = (e.clientX || e.changedTouches[0].clientX);
+  oldy = (e.clientY || e.changedTouches[0].clientY);
 }
 
 function dropper(e){
   document.removeEventListener("mousup",dropper);
   document.removeEventListener("mousemove",mover);
+  document.removeEventListener("touchend",dropper);
+  document.removeEventListener("touchmove",mover);
 }
 
 function grabber(e){
-  oldx = e.clientX;
-  oldy = e.clientY;
+  oldx = e.clientX || e.changedTouches[0].clientX;
+  oldy = e.clientY || e.changedTouches[0].clientY;
   document.addEventListener("mousemove",mover);
   document.addEventListener("mouseup",dropper);
+  document.addEventListener("touchmove",mover);
+  document.addEventListener("touchend",dropper);
 }
 canvas.addEventListener("mousedown",grabber);
-canvas.addEventListener("touchstart",()=>{console.log("touchy");});
+canvas.addEventListener("touchstart",grabber);
 
 
 
