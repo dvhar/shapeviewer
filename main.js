@@ -69,11 +69,11 @@ var filePath =  "/mesh/";
 var models = []; readyCount = 0; //14 total
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
+var roicolors = [];
 var keys = {};
-var rHeight = window.innerHeight * .95;
+var rHeight = window.innerHeight * .9;
 var rWidth = Math.floor(rHeight * (16/9));
 var ntype = 0.0;
-document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
 var moves = { t: {x:0, y:0, z:90},
               r: {x:0, y:0, z:0}, 
               c: {x:0, y:0, z:0},
@@ -107,6 +107,17 @@ onkeydown = onkeyup = function(e){
   e = e || event;
   keys[keycodes[e.keyCode]] = e.type == 'keydown';
 }
+function colorgen(model){
+  for (let h=0; h<3; h++)
+    model.color[h] = Math.random();
+}
+function colorall(models){
+  for (let h=0; h<14; h++)
+    colorgen(models[h]);
+}
+document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
+document.getElementById("cbut").onclick = ()=>{ colorall(models); };
+
 
 
 
@@ -212,24 +223,6 @@ function main() {
 
 
 }
-
-
-var roicolors = [
-  [0.3,0.8,0.9],
-  [0.4,0.8,0.7],
-  [0.5,0.8,0.5],
-  [0.9,0.5,0.2],
-  [0.3,0.8,0.8],
-  [0.4,0.5,0.2],
-  [0.8,0.2,0.8],
-  [0.2,0.3,0.6],
-  [0.8,0.9,0.9],
-  [0.5,0.6,0.3],
-  [0.4,0.8,0.5],
-  [0.5,0.4,0.9],
-  [0.9,0.7,0.4],
-  [0.4,0.3,0.6]
-];
 
 
 var center = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,count:0 };
@@ -369,7 +362,7 @@ function parseMesh(txt,model) {
   model.verts = new Float32Array(verts);
   model.norms = new Float32Array(norms);
   model.tnorms = new Float32Array(tnorms);
-  model.color = roicolors[rn++];
+  model.color = [];
   return model;
 }
 
@@ -404,12 +397,14 @@ function loadBuffers(model){
 
 }
 
+
 function whenLoaded(num){
   setTimeout(()=>{ 
     if (readyCount==num){
       //center the models and load into buffers
       center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
       for (var i in models){
+        colorgen(models[i]);
         models[i].center[0] -= center.mx;
         models[i].center[1] -= center.my;
         models[i].center[2] -= center.mz;

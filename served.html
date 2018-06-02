@@ -28,16 +28,20 @@ body {
   max-width: 30em;
   margin: auto;
 }
-#nbut {
+.toggles {
   background-color: black;
-  color: green;
+  color: limegreen;
   border: 2px solid green;
 }
 </style>
 </head>
 <div id="main">
 <canvas id="c" width="400" height="400" ></canvas>
-<button id="nbut">change norms</button>
+<br>
+<div id="butspace">
+<button id="nbut" class="toggles">change norms</button>
+<button id="cbut" class="toggles">change color</button>
+</div>
 <br>
 <span id="fps"></span>
 
