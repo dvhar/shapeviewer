@@ -29,7 +29,7 @@ class Server {
       //String rfile = "resliced_mesh_18.m";
       String uri = t.getRequestURI().toString();
       String rfile = uri.substring(uri.lastIndexOf('/') + 1);
-      String fpath = "/home/dave/sync/coding/webdev/shape/shape/" + rfile;
+      String fpath = "/home/dave/sync/coding/webdev/webgltest/render/verts/" + rfile;
       File file = new File(fpath);
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
@@ -44,7 +44,7 @@ class Server {
     @Override
     public void handle(HttpExchange t) throws IOException {
 
-      String fpath = "/home/dave/sync/coding/webdev/webgltest/tut/served.html";
+      String fpath = "/home/dave/sync/coding/webdev/webgltest/render/served.html";
       File file = new File(fpath);
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
@@ -62,8 +62,7 @@ class Server {
 
       String uri = t.getRequestURI().toString();
       String rfile = uri.substring(uri.lastIndexOf('/') + 1);
-      String fpath = "/home/dave/sync/coding/webdev/webgltest/tut/" + rfile;
-      System.out.println(fpath);
+      String fpath = "/home/dave/sync/coding/webdev/webgltest/render/" + rfile;
       File file = new File(fpath);
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
