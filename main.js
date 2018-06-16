@@ -50,6 +50,19 @@ gl.setSize = function(w,h){
   this.viewport(0,0,w,h);
 }
 
+function selectDir(dirName) {
+  var dirRequest = new XMLHttpRequest();
+  dirRequest.open("POST", "/posty", true);
+  dirRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  dirRequest.onreadystatechange = function() {
+    if (dirRequest.readyState == 4 && dirRequest.status == 200){
+      var subjects = dirRequest.responseText;
+      document.getElementById("fps").innerHTML = subjects;
+    }
+  }
+  dirRequest.send(`finder=${dirName}`);
+}
+
 
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
@@ -76,7 +89,7 @@ var rWidth = Math.floor(rHeight * (16/9));
 var ntype = 0.0;
 var dt = 0;
 var moves = { t: {x:0, y:0, z:90},
-              r: {x:0, y:0, z:0}, 
+              r: {x:3.14, y:3.14, z:0}, 
               c: {x:0, y:0, z:0},
 
               m: {x:0, y:0.0, z:0},
@@ -120,18 +133,19 @@ function colorall(models){
   for (let h=0; h<14; h++)
     colorgen(models[h]);
 }
+document.getElementById("searchbut").onclick = ()=>{ selectDir(document.getElementById("dirsearch").value); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
 document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
 
 
 //mouse and touchscreen moving
 function mover(e){
-  movex = ((e.clientX || e.changedTouches[0].clientX) - oldx);
-  movey = ((e.clientY || e.changedTouches[0].clientY) - oldy);
+  movex = ((e.clientX || e.targetTouches[0].clientX) - oldx);
+  movey = ((e.clientY || e.targetTouches[0].clientY) - oldy);
   moves.r.y -= 0.5*movex*dt;
   moves.r.x += 0.5*movey*dt;
-  oldx = (e.clientX || e.changedTouches[0].clientX);
-  oldy = (e.clientY || e.changedTouches[0].clientY);
+  oldx = (e.clientX || e.targetTouches[0].clientX);
+  oldy = (e.clientY || e.targetTouches[0].clientY);
 }
 
 function dropper(e){
@@ -139,18 +153,43 @@ function dropper(e){
   document.removeEventListener("mousemove",mover);
   document.removeEventListener("touchend",dropper);
   document.removeEventListener("touchmove",mover);
+  //document.removeEventListener("touchmove",zoomer);
 }
 
 function grabber(e){
-  oldx = e.clientX || e.changedTouches[0].clientX;
-  oldy = e.clientY || e.changedTouches[0].clientY;
+  oldx = e.clientX || e.targetTouches[0].clientX;
+  oldy = e.clientY || e.targetTouches[0].clientY;
   document.addEventListener("mousemove",mover);
   document.addEventListener("mouseup",dropper);
   document.addEventListener("touchmove",mover);
   document.addEventListener("touchend",dropper);
 }
+/*
+function zoomgrab(e){
+  if (e.targetTouches[1]){
+    otx1 = e.targetTouches[0].clientX;
+    oty1 = e.targetTouches[0].clientY;
+    otx2 = e.targetTouches[1].clientX;
+    oty2 = e.targetTouches[1].clientY;
+    odist = Math.sqrt((otx1-otx2)*(otx1-otx2)+(oty1-oty2)*(oty1-oty2));
+    document.addEventListener("touchmove",zoomer);
+    document.addEventListener("touchend",dropper);
+  }
+}
+function zoomer(e){
+  tx1 = e.targetTouches[0].clientX;
+  ty1 = e.targetTouches[0].clientY;
+  tx2 = e.targetTouches[1].clientX;
+  ty2 = e.targetTouches[1].clientY;
+  dist = Math.sqrt((tx1-tx2)*(tx1-tx2)+(ty1-ty2)*(ty1-ty2));
+  console.log(dist - odist);
+  moves.t.z -= (dist - odist);
+  odist = dist;
+}
+*/
 canvas.addEventListener("mousedown",grabber);
 canvas.addEventListener("touchstart",grabber);
+//canvas.addEventListener("touchstart",zoomgrab);
 
 
 
@@ -472,6 +511,7 @@ function loadMeshFile(fileName) {
   }
   meshRequest.send(null);
 }
+
 
 
 for (var x in rois){

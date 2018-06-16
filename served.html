@@ -33,6 +33,18 @@ body {
   color: limegreen;
   border: 2px solid green;
 }
+.search {
+  width: 200;
+  background-color: black;
+  color: #33ff33;
+  border: 2px solid green;
+  margin-right: -6px;
+  margin-left: 6px;
+
+}
+.formy {
+  display: inline;
+}
 </style>
 </head>
 <div id="main">
@@ -42,6 +54,8 @@ body {
 <button id="nbut" class="toggles">change norms</button>
 <button id="cbut" class="toggles">change color</button>
 <span id="fps"></span>
+<input type="text" name="finder" id="dirsearch" class="search"></input>
+<button class="toggles" id="searchbut">search</button>
 </div>
 
 <script id="vs" type="x-shader/x-vertex">#version 300 es
