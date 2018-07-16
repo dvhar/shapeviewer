@@ -64,6 +64,8 @@ function getSubList() {
         var subdiv = document.createElement('td');
         var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
         subdiv.appendChild(document.createTextNode(subname));
+        subdiv.id = i;
+        subdiv.onclick = function(){ currentsubject=this.id; console.log(this.id); loadnewsubject(this.id); }
         subrow.appendChild(subdiv);
         listDom.appendChild(subrow);
       }
@@ -101,6 +103,7 @@ var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
 var filePath =  "/mesh/";
 var models = []; readyCount = 0; //14 total
+var currentsubject = 0;
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var roicolors = [];
@@ -158,7 +161,7 @@ function colorall(models){
 document.getElementById("searchbut").onclick = ()=>{ selectDir(document.getElementById("dirsearch").value); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
 document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
-document.getElementById("kbut").onclick = ()=>{ loadnewsubject(); };
+document.getElementById("kbut").onclick = ()=>{ loadnewsubject(currentsubject); };
 
 
 //mouse and touchscreen moving
@@ -517,10 +520,11 @@ function whenLoaded(num){
 }
 
 
-function loadMeshFile(fileName) {
+function loadMeshFile(fileName,subjectidx=0) {
   var meshRequest = new XMLHttpRequest();
-  meshRequest.open("GET", fileName, true);
-  //meshRequest.open("GET", fileName+"?subject=0", true);
+  meshRequest.open("POST", "/mesh", true);
+  //meshRequest.open("GET",fileName, true);
+  meshRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
       mesh = meshRequest.responseText;
@@ -530,11 +534,12 @@ function loadMeshFile(fileName) {
       readyCount++;
     }
   }
-  meshRequest.send(null);
+  //meshRequest.send(null);
+  meshRequest.send(`rfile=${fileName}&subjectidx=${subjectidx}`);
 }
 
 
-function loadnewsubject(subject,recenter=false) {
+function loadnewsubject(subjectidx,recenter=false) {
   models = []; readyCount = 0;
   if (recenter)
     moves = { t: {x:0, y:-3, z:75},
@@ -543,12 +548,13 @@ function loadnewsubject(subject,recenter=false) {
               m: {x:0, y:0.0, z:0},
               g: {x:0, y:0.0, z:0}, }
   for (var x in rois){
-    fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
-    loadMeshFile(fileName);
+    //fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
+    fileName = `resliced_mesh_${rois[x]}.m`;
+    loadMeshFile(fileName,subjectidx);
   }
   whenLoaded(rois.length);
 }
 
-loadnewsubject();
+loadnewsubject(currentsubject);
 
 getSubList();

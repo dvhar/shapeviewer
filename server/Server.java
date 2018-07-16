@@ -6,6 +6,7 @@ import java.util.*;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.lang.String;
+import java.lang.Integer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
@@ -31,8 +32,6 @@ class Server {
     @Override
     public void handle(HttpExchange t) throws IOException {
 
-      //experimental selector
-      /*
       Map<String, String> reqData = new HashMap<String, String>();
       byte[] d = new byte[100];
       InputStream stuff = t.getRequestBody();
@@ -46,17 +45,15 @@ class Server {
       }
 
       String rfile = java.net.URLDecoder.decode(reqData.get("rfile"), "UTF-8");
-      //String subjectIdx = java.net.URLDecoder.decode(reqData.get("subject"), "UTF-8");
-      
-      System.out.println(subjectIdx);
-      */
-      //end experimental selector
+      int subjectIndex = Integer.parseInt(java.net.URLDecoder.decode(reqData.get("subjectidx"), "UTF-8").trim());
+      System.out.println(subjectIndex);
 
 
       String uri = t.getRequestURI().toString();
-      String rfile = uri.substring(uri.lastIndexOf('/') + 1);
-      String fpath = DirFinder.getCurrentDir(0) + rfile;
-      File file = new File(fpath);
+      //String rfile = uri.substring(uri.lastIndexOf('/') + 1);
+      String fpath = DirFinder.getCurrentDir(subjectIndex) + rfile;
+
+      File file = new File(fpath.trim());
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
       t.sendResponseHeaders(200,response.length());
