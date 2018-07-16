@@ -50,6 +50,28 @@ gl.setSize = function(w,h){
   this.viewport(0,0,w,h);
 }
 
+function getSubList() {
+  var dirRequest = new XMLHttpRequest();
+  dirRequest.open("GET", "/subjects", true);
+  dirRequest.onreadystatechange = function() {
+    if (dirRequest.readyState == 4 && dirRequest.status == 200){
+      var subjects = dirRequest.responseText;
+      var listDom = document.getElementById("subList");
+      var subList = JSON.parse(subjects);
+      listDom.innerHTML = "";
+      for (var i in subList){
+        var subrow = document.createElement('tr');
+        var subdiv = document.createElement('td');
+        var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
+        subdiv.appendChild(document.createTextNode(subname));
+        subrow.appendChild(subdiv);
+        listDom.appendChild(subrow);
+      }
+    }
+  }
+  dirRequest.send(null);
+}
+
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
   dirRequest.open("POST", "/posty", true);
@@ -57,13 +79,12 @@ function selectDir(dirName) {
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
       var subjects = dirRequest.responseText;
-      document.getElementById("fps").innerHTML = subjects;
+      //document.getElementById("fps").innerHTML = subjects;
+      getSubList();
     }
   }
   dirRequest.send(`finder=${dirName}`);
 }
-
-
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
 var normal_loc = gl.getAttribLocation(program, "a_normal");
@@ -84,11 +105,12 @@ var models = []; readyCount = 0; //14 total
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var roicolors = [];
 var keys = {};
-var rHeight = window.innerHeight * .9;
-var rWidth = Math.floor(rHeight * (16/9));
+var rHeight = window.innerHeight;
+var rWidth = window.innerWidth;
+var aspectRatio = rWidth / rHeight;
 var ntype = 0.0;
 var dt = 0;
-var moves = { t: {x:0, y:0, z:90},
+var moves = { t: {x:0, y:-3, z:75},
               r: {x:3.14, y:3.14, z:0}, 
               c: {x:0, y:0, z:0},
 
@@ -136,6 +158,7 @@ function colorall(models){
 document.getElementById("searchbut").onclick = ()=>{ selectDir(document.getElementById("dirsearch").value); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
 document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
+document.getElementById("kbut").onclick = ()=>{ loadnewsubject(); };
 
 
 //mouse and touchscreen moving
@@ -193,69 +216,66 @@ canvas.addEventListener("touchstart",grabber);
 
 
 
+function drawFrame(v) {
+
+  gl.useProgram(program);
+  gl.setSize(rWidth,rHeight);
+  gl.clearColor(0,0,0,0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+
+  for (var i in models){
+
+    var projmat = p4Matrix(aspectRatio);
+
+    var cammat = i4Matrix();
+    tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
+
+    var viewmat = i4Matrix();
+    viewmat = invert(viewmat,cammat);
+    var viewprojmat = mProduct(projmat,viewmat);
+
+    var worldmat = i4Matrix();
+    rx4Matrix(v.r.x,worldmat);
+    ry4Matrix(v.r.y,worldmat);
+    rz4Matrix(v.r.z,worldmat);
+
+    var mm = models[i].center;
+    tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,worldmat);
+
+    viewprojmat = mProduct(viewprojmat,worldmat);
+
+    var worldinverse = worldmat.slice(0,worldmat.length);;
+    var worldinverse = invert(worldinverse);
+    var worldinvtrans = i4Matrix();
+    worldinvtrans = transpose(worldinvtrans,worldinverse);
+
+    var litmat = i4Matrix();
+    tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
+    var litpos = vecProd([0,10,90,1],litmat);
+
+    gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
+    gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
+    gl.uniformMatrix4fv(world_loc,false,worldmat);
+    gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
+    gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
+    gl.uniform3fv(specularcolor_loc,[0.9,0.9,0.5]);
+    gl.uniform3fv(basecolor_loc,models[i].color);
+    gl.uniform1f(normtype_loc,ntype);
+
+    gl.uniform3fv(viewworldpos_loc,[0,0,0]);//old l direction
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.bindVertexArray(models[i].vao);
+    gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
+
+  }
+}
 
 
 function main() {
 
-  function drawFrame(v) {
-
-    gl.useProgram(program);
-    gl.setSize(rWidth,rHeight);
-    gl.clearColor(0,0,0,0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-
-    for (var i in models){
-
-      var projmat = p4Matrix();
-
-      var cammat = i4Matrix();
-      tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
-
-      var viewmat = i4Matrix();
-      viewmat = invert(viewmat,cammat);
-      var viewprojmat = mProduct(projmat,viewmat);
-
-      var worldmat = i4Matrix();
-      rx4Matrix(v.r.x,worldmat);
-      ry4Matrix(v.r.y,worldmat);
-      rz4Matrix(v.r.z,worldmat);
-
-      var mm = models[i].center;
-      tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,worldmat);
-
-      viewprojmat = mProduct(viewprojmat,worldmat);
-
-      var worldinverse = worldmat.slice(0,worldmat.length);;
-      var worldinverse = invert(worldinverse);
-      var worldinvtrans = i4Matrix();
-      worldinvtrans = transpose(worldinvtrans,worldinverse);
-
-      var litmat = i4Matrix();
-      tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
-      var litpos = vecProd([20,30,90,1],litmat);
-
-      gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
-      gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
-      gl.uniformMatrix4fv(world_loc,false,worldmat);
-      gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
-      gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
-      gl.uniform3fv(specularcolor_loc,[0.9,0.9,0.5]);
-      gl.uniform3fv(basecolor_loc,models[i].color);
-      gl.uniform1f(normtype_loc,ntype);
-
-      gl.uniform3fv(viewworldpos_loc,[0,0,0]);//old l direction
-      gl.enable(gl.CULL_FACE);
-      gl.enable(gl.DEPTH_TEST);
-      gl.bindVertexArray(models[i].vao);
-      gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
-
-    }
-  }
-
-
   drawFrame(moves);
-
 
   var lastFrame = 0;
   var radPerSec	= Math.PI;
@@ -290,7 +310,7 @@ function main() {
       drawFrame(moves);
       lastFrame = now;
     }
-    window.requestAnimationFrame(run); 
+    if (models.length == rois.length) window.requestAnimationFrame(run); 
   }
   window.requestAnimationFrame(run);
 
@@ -493,13 +513,14 @@ function whenLoaded(num){
     else {
       whenLoaded(num); 
     }
-  },100);
+  },10);
 }
 
 
 function loadMeshFile(fileName) {
   var meshRequest = new XMLHttpRequest();
   meshRequest.open("GET", fileName, true);
+  //meshRequest.open("GET", fileName+"?subject=0", true);
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
       mesh = meshRequest.responseText;
@@ -513,10 +534,21 @@ function loadMeshFile(fileName) {
 }
 
 
-
-for (var x in rois){
-  fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
-  loadMeshFile(fileName);
+function loadnewsubject(subject,recenter=false) {
+  models = []; readyCount = 0;
+  if (recenter)
+    moves = { t: {x:0, y:-3, z:75},
+              r: {x:3.14, y:3.14, z:0}, 
+              c: {x:0, y:0, z:0},
+              m: {x:0, y:0.0, z:0},
+              g: {x:0, y:0.0, z:0}, }
+  for (var x in rois){
+    fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
+    loadMeshFile(fileName);
+  }
+  whenLoaded(rois.length);
 }
 
-whenLoaded(rois.length);
+loadnewsubject();
+
+getSubList();

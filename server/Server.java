@@ -18,8 +18,8 @@ class Server {
 
     HttpServer server = HttpServer.create(new InetSocketAddress(8000),0);
     server.createContext("/mesh", new MeshHandler());
-    server.createContext("/view", new ViewHandler());
     server.createContext("/", new ViewHandler());
+    server.createContext("/subjects", new ListHandler());
     server.createContext("/scripts", new ScriptHandler());
     server.createContext("/posty", new PostHandler());
     server.setExecutor(null);
@@ -31,10 +31,31 @@ class Server {
     @Override
     public void handle(HttpExchange t) throws IOException {
 
+      //experimental selector
+      /*
+      Map<String, String> reqData = new HashMap<String, String>();
+      byte[] d = new byte[100];
+      InputStream stuff = t.getRequestBody();
+      stuff.read(d);
+      String totalIn = new String(d,"UTF-8");
+      String[] pairs = totalIn.split("&");
+
+      for (int x=0; x<pairs.length; x++){
+        String[] pair = pairs[x].split("=");
+        reqData.put(pair[0],pair[1]);
+      }
+
+      String rfile = java.net.URLDecoder.decode(reqData.get("rfile"), "UTF-8");
+      //String subjectIdx = java.net.URLDecoder.decode(reqData.get("subject"), "UTF-8");
+      
+      System.out.println(subjectIdx);
+      */
+      //end experimental selector
+
+
       String uri = t.getRequestURI().toString();
       String rfile = uri.substring(uri.lastIndexOf('/') + 1);
-      //String fpath = "/home/dave/sync/coding/webdev/webgltest/render/verts/" + rfile;
-      String fpath = DirFinder.getCurrentDir() + rfile;
+      String fpath = DirFinder.getCurrentDir(0) + rfile;
       File file = new File(fpath);
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
@@ -79,6 +100,19 @@ class Server {
     }
   }
 
+  static class ListHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange t) throws IOException {
+
+      String response = DirFinder.getSubjList();
+
+      t.sendResponseHeaders(200,response.length());
+      OutputStream os = t.getResponseBody();
+      os.write(response.getBytes());
+      os.close();
+    }
+  }
+
   static class PostHandler implements HttpHandler {
 
 
@@ -103,7 +137,7 @@ class Server {
 
       DirFinder.setSubjParentDir(reqPath);
 
-      String response = "path changed to " + DirFinder.getCurrentDir() + "\n";
+      String response = "path changed to " + DirFinder.getCurrentDir(0) + "\n";
       System.out.println(response);
 
       t.sendResponseHeaders(200,response.length());
@@ -122,14 +156,14 @@ class DirFinder {
   private static File sdir;
   private static int foundMeshes = 0;
   private static List<File> subjDirs;
-  private static int currentIndex = 0;
+  private static List<File> newSubjDirs;
 
 
   public static void setSubjParentDir(String path){
     sdir = new File(path.trim());
     if (!sdir.isDirectory()) return;
     dirList = sdir.listFiles();
-    subjDirs = new ArrayList<File>();
+    newSubjDirs = new ArrayList<File>();
 
 
     for (int i=0; i<dirList.length; i++){
@@ -140,17 +174,27 @@ class DirFinder {
           if (subDirList[x].getName().contains("resliced_mesh_")) 
             foundMeshes++;
         if (foundMeshes == 14){
-          subjDirs.add(dirList[i]);
-          //System.out.println("found: "+dirList[i].getPath());
+          newSubjDirs.add(dirList[i]);
         }
       }
+
+      if (newSubjDirs.size() > 0) subjDirs = newSubjDirs;
     }
   }
 
+  public static String getSubjList(){
+    String sList = "[";
+    for (int i=0; i<subjDirs.size(); i++){
+      sList += "\""+ subjDirs.get(i).getPath()+"/\"";
+      if (i<subjDirs.size()-1) sList += ",";
+    }
+    sList += "]";
+    return sList;
+  }
 
-  public static String getCurrentDir(){
-    //System.out.println(subjDirs.get(currentIndex).getPath()+"/");
-    return subjDirs.get(currentIndex).getPath()+"/";
+
+  public static String getCurrentDir(int subjectIndex){
+    return subjDirs.get(subjectIndex).getPath()+"/";
   }
 
 

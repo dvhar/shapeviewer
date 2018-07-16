@@ -4,11 +4,14 @@
 <style>
 body {
   background-color: black;
+  color: LimeGreen;
 }
 #c {
   border: 2px solid black;
   width: 40em;
   height: 30em;
+  position: fixed;
+  margin: auto;
 }
 #fps {
   width: 20em;
@@ -17,10 +20,6 @@ body {
   width: 2em;
 }
 #main {
-  display: block;
-  margin: auto;
-  text-align: center;
-  color: LimeGreen;
 }
 #usage {
   display: block;
@@ -42,20 +41,38 @@ body {
   margin-left: 6px;
 
 }
+#butspace{
+  position: fixed;
+  margin: auto;
+  bottom: 20;
+}
+#subList{
+  border: 1px solid green;
+  position: fixed;
+  right: 0;
+  bottom: 20;
+  padding: 4px
+}
 .formy {
   display: inline;
 }
 </style>
 </head>
 <div id="main">
-<canvas id="c" width="400" height="400" ></canvas>
-<br>
-<div id="butspace">
-<button id="nbut" class="toggles">change norms</button>
-<button id="cbut" class="toggles">change color</button>
-<span id="fps"></span>
-<input type="text" name="finder" id="dirsearch" class="search"></input>
-<button class="toggles" id="searchbut">search</button>
+  <canvas id="c" width="400" height="400" ></canvas>
+
+  <div id="butspace">
+    <button id="nbut" class="toggles">change norms</button>
+    <button id="cbut" class="toggles">change color</button>
+    <button id="kbut" class="toggles">reload</button>
+    <span id="fps"></span>
+    <input type="text" name="finder" id="dirsearch" class="search"></input>
+    <button class="toggles" id="searchbut">change directory</button>
+  </div>
+
+  <table id="subList">
+
+  </div>
 </div>
 
 <script id="vs" type="x-shader/x-vertex">#version 300 es

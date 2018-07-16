@@ -43,8 +43,7 @@ sc4Matrix = function (x=1,y=1,z=1,mat) {
   return mat;
 }
 
-p4Matrix = function(near=.01, far=2000, fov=dtr(60), aspect=1.3333) {
-  aspect=(16/9)
+p4Matrix = function(aspect=1.3333, near=.01, far=2000, fov=dtr(60)) {
   var f = Math.tan(Math.PI * 0.5 - 0.5 * fov);
   var rangeInv = 1.0 / (near - far);
 
