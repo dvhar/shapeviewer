@@ -46,7 +46,6 @@ class Server {
 
       String rfile = java.net.URLDecoder.decode(reqData.get("rfile"), "UTF-8");
       int subjectIndex = Integer.parseInt(java.net.URLDecoder.decode(reqData.get("subjectidx"), "UTF-8").trim());
-      System.out.println(subjectIndex);
 
 
       String uri = t.getRequestURI().toString();

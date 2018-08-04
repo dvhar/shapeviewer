@@ -50,6 +50,7 @@ gl.setSize = function(w,h){
   this.viewport(0,0,w,h);
 }
 
+var currentsubject = 0;
 function getSubList() {
   var dirRequest = new XMLHttpRequest();
   dirRequest.open("GET", "/subjects", true);
@@ -103,7 +104,6 @@ var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
 var filePath =  "/mesh/";
 var models = []; readyCount = 0; //14 total
-var currentsubject = 0;
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var roicolors = [];
