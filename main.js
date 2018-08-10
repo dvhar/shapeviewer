@@ -53,7 +53,7 @@ gl.setSize = function(w,h){
 var currentsubject = 0;
 function getSubList() {
   var dirRequest = new XMLHttpRequest();
-  dirRequest.open("GET", "/subjects", true);
+  dirRequest.open("GET", "/shape/subjects", true);
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
       var subjects = dirRequest.responseText;
@@ -77,7 +77,7 @@ function getSubList() {
 
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
-  dirRequest.open("POST", "/posty", true);
+  dirRequest.open("POST", "/shape/posty", true);
   dirRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
@@ -102,7 +102,7 @@ var basecolor_loc = gl.getUniformLocation(program, "u_basecolor");
 var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
-var filePath =  "/mesh/";
+var filePath =  "/shape/mesh/";
 var models = []; readyCount = 0; //14 total
 //var rois = [10];
 var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
@@ -522,7 +522,7 @@ function whenLoaded(num){
 
 function loadMeshFile(fileName,subjectidx=0) {
   var meshRequest = new XMLHttpRequest();
-  meshRequest.open("POST", "/mesh", true);
+  meshRequest.open("POST", "/shape/mesh", true);
   //meshRequest.open("GET",fileName, true);
   meshRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   meshRequest.onreadystatechange = function() {

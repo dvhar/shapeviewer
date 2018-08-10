@@ -15,9 +15,9 @@ import com.sun.net.httpserver.HttpHandler;
 class Server {
 	public static void main(String[] a) throws Exception {
 
-    DirFinder.setSubjParentDir("/home/dave/sync/coding/webdev/webgltest/render/");
+    DirFinder.setSubjParentDir(DirFinder.programdir);
 
-    HttpServer server = HttpServer.create(new InetSocketAddress(8000),0);
+    HttpServer server = HttpServer.create(new InetSocketAddress(6866),0);
     server.createContext("/mesh", new MeshHandler());
     server.createContext("/", new ViewHandler());
     server.createContext("/subjects", new ListHandler());
@@ -25,7 +25,7 @@ class Server {
     server.createContext("/posty", new PostHandler());
     server.setExecutor(null);
     server.start();
-		System.out.println("Server running");
+		System.out.println("Server running: " + DirFinder.programdir);
 	}
 
   static class MeshHandler implements HttpHandler {
@@ -66,7 +66,7 @@ class Server {
     @Override
     public void handle(HttpExchange t) throws IOException {
 
-      String fpath = "/home/dave/sync/coding/webdev/webgltest/render/served.html";
+      String fpath = DirFinder.programdir + "served.html";
       File file = new File(fpath);
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
@@ -84,7 +84,7 @@ class Server {
 
       String uri = t.getRequestURI().toString();
       String rfile = uri.substring(uri.lastIndexOf('/') + 1);
-      String fpath = "/home/dave/sync/coding/webdev/webgltest/render/" + rfile;
+      String fpath = DirFinder.programdir + rfile;
       File file = new File(fpath);
 
       String response = new Scanner(file).useDelimiter("\\Z").next();
@@ -153,6 +153,7 @@ class DirFinder {
   private static int foundMeshes = 0;
   private static List<File> subjDirs;
   private static List<File> newSubjDirs;
+  public static String programdir = "/home/hardyd/render/";
 
 
   public static void setSubjParentDir(String path){
