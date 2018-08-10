@@ -153,7 +153,7 @@ class DirFinder {
   private static int foundMeshes = 0;
   private static List<File> subjDirs;
   private static List<File> newSubjDirs;
-  public static String programdir = "/home/hardyd/render/";
+  public static String programdir = "/home/dave/sync/coding/webdev/webgltest/render/";
 
 
   public static void setSubjParentDir(String path){

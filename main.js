@@ -50,6 +50,7 @@ gl.setSize = function(w,h){
   this.viewport(0,0,w,h);
 }
 
+
 var currentsubject = 0;
 function getSubList() {
   var dirRequest = new XMLHttpRequest();
@@ -62,11 +63,15 @@ function getSubList() {
       listDom.innerHTML = "";
       for (var i in subList){
         var subrow = document.createElement('tr');
+        subrow.style.color = 'green';
+        subrow.style.textShadow = 'none';
+        if (currentsubject == i) {subrow.style.color = 'cyan'; subrow.style.textShadow = '0px 0px 7px aqua, 0px 0px 3px aqua'; }
         var subdiv = document.createElement('td');
-        var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
+        var subname = subList[i];
+        //var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
         subdiv.appendChild(document.createTextNode(subname));
         subdiv.id = i;
-        subdiv.onclick = function(){ currentsubject=this.id; console.log(this.id); loadnewsubject(this.id); }
+        subdiv.onclick = function(){ currentsubject=this.id; console.log(this.id); loadnewsubject(this.id); getSubList(); }
         subrow.appendChild(subdiv);
         listDom.appendChild(subrow);
       }
@@ -77,7 +82,7 @@ function getSubList() {
 
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
-  dirRequest.open("POST", "/shape/posty", true);
+  dirRequest.open("POST", "/shape/change", true);
   dirRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
@@ -161,7 +166,6 @@ function colorall(models){
 document.getElementById("searchbut").onclick = ()=>{ selectDir(document.getElementById("dirsearch").value); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
 document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
-document.getElementById("kbut").onclick = ()=>{ loadnewsubject(currentsubject); };
 
 
 //mouse and touchscreen moving
@@ -522,7 +526,7 @@ function whenLoaded(num){
 
 function loadMeshFile(fileName,subjectidx=0) {
   var meshRequest = new XMLHttpRequest();
-  meshRequest.open("POST", "/shape/mesh", true);
+  meshRequest.open("GET", `/shape/mesh/${subjectidx}/${fileName}?_=${new Date().getTime()}`, true);
   //meshRequest.open("GET",fileName, true);
   meshRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   meshRequest.onreadystatechange = function() {
@@ -534,8 +538,8 @@ function loadMeshFile(fileName,subjectidx=0) {
       readyCount++;
     }
   }
-  //meshRequest.send(null);
-  meshRequest.send(`rfile=${fileName}&subjectidx=${subjectidx}`);
+  meshRequest.send(null);
+  //meshRequest.send(`rfile=${fileName}&subjectidx=${subjectidx}`);
 }
 
 
