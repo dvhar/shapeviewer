@@ -61,9 +61,11 @@ function getSubList() {
       var subList = JSON.parse(subjects);
       listDom.innerHTML = "";
       for (var i in subList){
+        console.log(subList[i]);
         var subrow = document.createElement('tr');
         var subdiv = document.createElement('td');
-        var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
+        var subname = subList[i];
+        //var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
         subdiv.appendChild(document.createTextNode(subname));
         subdiv.id = i;
         subdiv.onclick = function(){ currentsubject=this.id; console.log(this.id); loadnewsubject(this.id); }
@@ -77,7 +79,7 @@ function getSubList() {
 
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
-  dirRequest.open("POST", "/posty", true);
+  dirRequest.open("POST", "/change", true);
   dirRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
@@ -522,7 +524,7 @@ function whenLoaded(num){
 
 function loadMeshFile(fileName,subjectidx=0) {
   var meshRequest = new XMLHttpRequest();
-  meshRequest.open("POST", "/mesh", true);
+  meshRequest.open("GET", `/mesh/${subjectidx}/${fileName}?_=${new Date().getTime()}`, true);
   //meshRequest.open("GET",fileName, true);
   meshRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   meshRequest.onreadystatechange = function() {
@@ -534,8 +536,8 @@ function loadMeshFile(fileName,subjectidx=0) {
       readyCount++;
     }
   }
-  //meshRequest.send(null);
-  meshRequest.send(`rfile=${fileName}&subjectidx=${subjectidx}`);
+  meshRequest.send(null);
+  //meshRequest.send(`rfile=${fileName}&subjectidx=${subjectidx}`);
 }
 
 
