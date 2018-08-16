@@ -30,14 +30,11 @@ class dirmanager:
     path = str(path)
     if not os.path.isdir(path):
       return False
-    newsubjects = []
     dirlist = os.listdir(path) 
     for prospect in dirlist:
       if self.isSubject(path +'/'+ prospect):
-        newsubjects.append(prospect)
-    if len(newsubjects) > 0:
-      self.subjectParentDir = path
-      return True
+        self.subjectParentDir = path
+        return True
     return False
 
   def getSubjectList(self):
