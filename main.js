@@ -71,7 +71,7 @@ function getSubList() {
         //var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
         subdiv.appendChild(document.createTextNode(subname));
         subdiv.id = i;
-        subdiv.onclick = function(){ currentsubject=this.id; console.log(this.id); loadnewsubject(this.id); getSubList(); }
+        subdiv.onclick = function(){ currentsubject=this.id; loadnewsubject(this.id); getSubList(); }
         subrow.appendChild(subdiv);
         listDom.appendChild(subrow);
       }
@@ -82,7 +82,8 @@ function getSubList() {
 
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
-  dirRequest.open("POST", "/shape/change", true);
+  var sendurl = `/shape/change?newdir=${encodeURIComponent(dirName)}`
+  dirRequest.open("POST",sendurl, true);
   dirRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
@@ -93,6 +94,7 @@ function selectDir(dirName) {
   }
   dirRequest.send(`finder=${dirName}`);
 }
+
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
 var normal_loc = gl.getAttribLocation(program, "a_normal");
@@ -108,9 +110,10 @@ var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
 var filePath =  "/shape/mesh/";
-var models = []; readyCount = 0; //14 total
-//var rois = [10];
-var rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
+models = []; 
+readyCount = 0; //14 total
+center = {};
+rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
 var roicolors = [];
 var keys = {};
 var rHeight = window.innerHeight;
@@ -247,6 +250,7 @@ function drawFrame(v) {
     ry4Matrix(v.r.y,worldmat);
     rz4Matrix(v.r.z,worldmat);
 
+
     var mm = models[i].center;
     tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,worldmat);
 
@@ -321,12 +325,9 @@ function main() {
   }
   window.requestAnimationFrame(run);
 
-
 }
 
 
-var center = { hx:null,lx:null,hy:null,ly:null,hz:null,lz:null,mx:null,my:null,mz:null,count:0 };
-rn=0;
 function parseMesh(txt,model) {
 
   txt = txt.trim() + '\n';
@@ -500,9 +501,9 @@ function loadBuffers(model){
 
 function whenLoaded(num){
   setTimeout(()=>{ 
-    if (readyCount==num){
+    if (readyCount==num && center.count==1){
       //center the models and load into buffers
-      center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2;
+      center.mx=(center.lx+center.hx)/2,center.my=(center.ly+center.hy)/2,center.mz=(center.lz+center.hz)/2,center.count++;
       for (var i in models){
         colorgen(models[i]);
         models[i].center[0] -= center.mx;
@@ -544,13 +545,15 @@ function loadMeshFile(fileName,subjectidx=0) {
 
 
 function loadnewsubject(subjectidx,recenter=false) {
+  center.count = 0;
   models = []; readyCount = 0;
-  if (recenter)
+  if (recenter) {
     moves = { t: {x:0, y:-3, z:75},
               r: {x:3.14, y:3.14, z:0}, 
               c: {x:0, y:0, z:0},
               m: {x:0, y:0.0, z:0},
               g: {x:0, y:0.0, z:0}, }
+  }
   for (var x in rois){
     //fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
     fileName = `resliced_mesh_${rois[x]}.m`;
