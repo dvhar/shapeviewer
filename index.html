@@ -28,6 +28,7 @@ body {
   background-color: black;
   color: limegreen;
   border: 2px solid green;
+  width: 100px;
 }
 .search {
   width: -webkit-fill-available;
@@ -62,10 +63,11 @@ body {
   <canvas id="c" width="400" height="400" ></canvas>
 
   <div id="butspace">
-    <button id="nbut" class="toggles">change norms</button>
+    <button id="nbut" class="toggles">chunky</button>
     <button id="cbut" class="toggles">change color</button>
     <input type="text" name="finder" id="dirsearch" class="search"></input>
     <button class="toggles" id="searchbut">change directory</button>
+    <span id="debug"></span>
   </div>
 
   <table id="subList">
@@ -81,25 +83,20 @@ body {
   out vec3 v_normal;
   out vec3 v_surfacetolite;
   out vec3 v_surfacetoview;
-  uniform mat4 u_worldviewprojection;
-  uniform mat4 u_worldinvtrans;
   uniform mat4 u_world;
   uniform vec3 u_liteworldpos;
   uniform vec3 u_viewworldpos;
   uniform float u_normtype;
 
   void main() {
-    gl_Position = u_worldviewprojection * a_position;
+    gl_Position = u_world * a_position;
+    gl_PointSize = 1.8;
 
-    v_normal = mat3(u_worldinvtrans) *  normalize(a_tnormal * u_normtype + a_normal * (1.0 - u_normtype));
-    //v_normal = mat3(u_worldinvtrans) * a_normal;
+    v_normal =  normalize(mat3(u_world) * ( a_tnormal * u_normtype + a_normal * (1.0 - u_normtype)));
 
-    //vec3 surfaceworldpos = vec3(u_worldviewprojection * a_position).xyz;  //moves past light
     vec3 surfaceworldpos = (u_world * a_position).xyz;
-
     v_surfacetolite = normalize( u_liteworldpos - surfaceworldpos );
-
-    v_surfacetoview = u_viewworldpos - surfaceworldpos;
+    v_surfacetoview = surfaceworldpos - u_viewworldpos  ;
   }
 
 </script>
@@ -116,6 +113,7 @@ body {
   uniform vec3 u_basecolor;
 
   void main() { 
+    
 
     vec3 surfaceToLightDir = normalize(v_surfacetolite);
     vec3 surfaceToViewDir = normalize(v_surfacetoview);
@@ -134,6 +132,6 @@ body {
   }
 
 </script>
-<script src="/shape/scripts/main.js"></script>
-<script src="/shape/scripts/math.js"></script>
+<script src="/scripts/main.js"></script>
+<script src="/scripts/math.js"></script>
 

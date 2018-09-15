@@ -54,7 +54,7 @@ gl.setSize = function(w,h){
 var currentsubject = 0;
 function getSubList() {
   var dirRequest = new XMLHttpRequest();
-  dirRequest.open("GET", "/shape/subjects", true);
+  dirRequest.open("GET", "/subjects", true);
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
       var subjects = dirRequest.responseText;
@@ -67,9 +67,7 @@ function getSubList() {
         subrow.style.textShadow = 'none';
         if (currentsubject == i) {subrow.style.color = 'cyan'; subrow.style.textShadow = '0px 0px 7px aqua, 0px 0px 3px aqua'; }
         var subdiv = document.createElement('td');
-        var subname = subList[i];
-        //var subname = subList[i].slice(0,subList[i].length-1).split('/').pop();
-        subdiv.appendChild(document.createTextNode(subname));
+        subdiv.appendChild(document.createTextNode(subList[i]));
         subdiv.id = i;
         subdiv.onclick = function(){ currentsubject=this.id; loadnewsubject(this.id); getSubList(); }
         subrow.appendChild(subdiv);
@@ -82,14 +80,15 @@ function getSubList() {
 
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
-  var sendurl = `/shape/change?newdir=${encodeURIComponent(dirName)}`
+  var sendurl = `/change?newdir=${encodeURIComponent(dirName)}`
   dirRequest.open("POST",sendurl, true);
   dirRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   dirRequest.onreadystatechange = function() {
     if (dirRequest.readyState == 4 && dirRequest.status == 200){
       var subjects = dirRequest.responseText;
-      //document.getElementById("fps").innerHTML = subjects;
       getSubList();
+      currentsubject = 0;
+      loadnewsubject(0);
     }
   }
   dirRequest.send(`finder=${dirName}`);
@@ -109,7 +108,8 @@ var basecolor_loc = gl.getUniformLocation(program, "u_basecolor");
 var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
-var filePath =  "/shape/mesh/";
+var filePath =  "/mesh/";
+var running =  "running";
 models = []; 
 readyCount = 0; //14 total
 center = {};
@@ -121,40 +121,47 @@ var rWidth = window.innerWidth;
 var aspectRatio = rWidth / rHeight;
 var ntype = 0.0;
 var dt = 0;
-var moves = { t: {x:0, y:-3, z:75},
+var moves = { t: {x:0, y:3, z:-75},
               r: {x:3.14, y:3.14, z:0}, 
-              c: {x:0, y:0, z:0},
-
+              c: {x:0, y:0, z:-100},
               m: {x:0, y:0.0, z:0},
-              g: {x:0, y:0.0, z:0}, }
+              g: {x:0, y:0.0, z:0},
+              otime: window.performance.now(),
+              ntime: window.performance.now(),
+              state: 0,
+              delta: 0,
+              change : function (member,axis,amount){ 
+                this[member][axis] += amount; 
+                this.state++; 
+                this.delta = this.ntime - this.otime;
+                this.ntime = this.otime;
+                }
+              }
 keycodes = {
-  37: 'left',
-  38: 'up',
-  39: 'right',
-  40: 'down',
-  65: 'a',
-  68: 'd',
-  87: 'w',
-  83: 's',
-  81: 'q',
-  69: 'e',
-  49: '1',
-  50: '2',
-  51: '3',
-  52: '4',
-  53: '5',
-  54: '6',
-  55: '7',
-  56: '8',
-  90: 'z',
-  88: 'x',
-  67: 'c',
-  82: 'r',
-  70: 'f'
+  37: { label: 'left', member: 'r', axis: 'y',  change: -1},
+  38: { label: 'up', member: 'r', axis: 'x',  change: 1},
+  39: { label: 'right', member: 'r', axis: 'y',  change: -1},
+  40: { label: 'down', member: 'r', axis: 'x',  change: 1},
+  65: { label: 'a', member: 't', axis: 'x', change: -1},
+  68: { label: 'd', member: 't', axis: 'x', change: 1},
+  87: { label: 'w', member: 't', axis: 'y', change: 1},
+  83: { label: 's', member: 't', axis: 'y', change: -1},
+  81: { label: 'q', member: 't', axis: 'z', change: 1},
+  69: { label: 'e', member: 't', axis: 'z', change: -1},
+  49: { label: '1', member: 'c', axis: 'y', change: 1},
+  50: { label: '2', member: 'c', axis: 'y', change: -1},
+  51: { label: '3', member: 'c', axis: 'x', change: 1},
+  52: { label: '4', member: 'c', axis: 'x', change: -1},
+  53: { label: '5', member: 'c', axis: 'z', change: 1},
+  54: { label: '6', member: 'c', axis: 'z', change: -1},
+  90: { label: 'z', member: 'r', axis: 'z', change: -1},
+  88: { label: 'x', member: 'r', axis: 'z', change: 1},
+  82: { label: 'r', member: 'm', axis: 'x', change: 1},
+  70: { label: 'f', member: 'm', axis: 'x', change: -1},
 }
 onkeydown = onkeyup = function(e){
   e = e || event;
-  keys[keycodes[e.keyCode]] = e.type == 'keydown';
+  keys[keycodes[e.keyCode].label] = e.type == 'keydown';
 }
 
 //toggle button for color
@@ -168,15 +175,24 @@ function colorall(models){
 }
 document.getElementById("searchbut").onclick = ()=>{ selectDir(document.getElementById("dirsearch").value); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
-document.getElementById("nbut").onclick = ()=>{ ntype = (ntype > 0.5 ? 0.0 : 1.0); };
+nbut = document.getElementById("nbut");
+nbut.onclick = ()=>{ 
+  if (ntype > 0.5){
+    ntype = 0.0;
+    nbut.innerHTML = "chunky";
+  } else {
+    ntype = 1.0;
+    nbut.innerHTML = "smooth";
+  }
+}
 
 
 //mouse and touchscreen moving
 function mover(e){
   movex = ((e.clientX || e.targetTouches[0].clientX) - oldx);
   movey = ((e.clientY || e.targetTouches[0].clientY) - oldy);
-  moves.r.y -= 0.5*movex*dt;
-  moves.r.x += 0.5*movey*dt;
+  moves.change('r','y',-0.5*movex*dt);
+  moves.change('r','x',0.5*movey*dt);
   oldx = (e.clientX || e.targetTouches[0].clientX);
   oldy = (e.clientY || e.targetTouches[0].clientY);
 }
@@ -186,10 +202,11 @@ function dropper(e){
   document.removeEventListener("mousemove",mover);
   document.removeEventListener("touchend",dropper);
   document.removeEventListener("touchmove",mover);
-  //document.removeEventListener("touchmove",zoomer);
+  document.removeEventListener("touchmove",zoomer);
 }
 
 function grabber(e){
+  e.preventDefault();
   oldx = e.clientX || e.targetTouches[0].clientX;
   oldy = e.clientY || e.targetTouches[0].clientY;
   document.addEventListener("mousemove",mover);
@@ -197,8 +214,8 @@ function grabber(e){
   document.addEventListener("touchmove",mover);
   document.addEventListener("touchend",dropper);
 }
-/*
 function zoomgrab(e){
+  e.preventDefault();
   if (e.targetTouches[1]){
     otx1 = e.targetTouches[0].clientX;
     oty1 = e.targetTouches[0].clientY;
@@ -215,14 +232,16 @@ function zoomer(e){
   tx2 = e.targetTouches[1].clientX;
   ty2 = e.targetTouches[1].clientY;
   dist = Math.sqrt((tx1-tx2)*(tx1-tx2)+(ty1-ty2)*(ty1-ty2));
-  console.log(dist - odist);
-  moves.t.z -= (dist - odist);
+  moves.change('t','z',0.2*(dist - odist));
   odist = dist;
 }
-*/
+function scrollzoom(e){
+  moves.change('t','z',(e.wheelDelta || -e.detail)/50);
+}
+canvas.addEventListener("mousewheel",scrollzoom);
 canvas.addEventListener("mousedown",grabber);
 canvas.addEventListener("touchstart",grabber);
-//canvas.addEventListener("touchstart",zoomgrab);
+canvas.addEventListener("touchstart",zoomgrab);
 
 
 
@@ -230,55 +249,39 @@ function drawFrame(v) {
 
   gl.useProgram(program);
   gl.setSize(rWidth,rHeight);
-  gl.clearColor(0,0,0,0);
+  gl.clearColor(0,0,0,1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.CULL_FACE);
+  gl.enable(gl.DEPTH_TEST);
 
 
   for (var i in models){
 
-    var projmat = p4Matrix(aspectRatio);
-
-    var cammat = i4Matrix();
-    tr4Matrix(v.t.x,v.t.y,v.t.z,cammat);
-
-    var viewmat = i4Matrix();
-    viewmat = invert(viewmat,cammat);
-    var viewprojmat = mProduct(projmat,viewmat);
-
-    var worldmat = i4Matrix();
-    rx4Matrix(v.r.x,worldmat);
-    ry4Matrix(v.r.y,worldmat);
-    rz4Matrix(v.r.z,worldmat);
-
-
+    var tmat = p4Matrix(aspectRatio);
     var mm = models[i].center;
-    tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,worldmat);
 
-    viewprojmat = mProduct(viewprojmat,worldmat);
-
-    var worldinverse = worldmat.slice(0,worldmat.length);;
-    var worldinverse = invert(worldinverse);
-    var worldinvtrans = i4Matrix();
-    worldinvtrans = transpose(worldinvtrans,worldinverse);
+    tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
+    rx4Matrix(v.r.x,tmat);
+    ry4Matrix(v.r.y,tmat);
+    rz4Matrix(v.r.z,tmat);
+    tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,tmat);
 
     var litmat = i4Matrix();
     tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
-    var litpos = vecProd([0,10,90,1],litmat);
+    var litpos = vecProd([0,10,0,1],litmat);
 
-    gl.uniformMatrix4fv(worviewproj_loc,false,viewprojmat);
-    gl.uniformMatrix4fv(worldinvtrans_loc,false,worldinvtrans);
-    gl.uniformMatrix4fv(world_loc,false,worldmat);
+    gl.uniformMatrix4fv(world_loc,false,tmat);
     gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
     gl.uniform3fv(litecolor_loc,[1.0,1.0,1.0]);
     gl.uniform3fv(specularcolor_loc,[0.9,0.9,0.5]);
     gl.uniform3fv(basecolor_loc,models[i].color);
     gl.uniform1f(normtype_loc,ntype);
+    gl.uniform3fv(viewworldpos_loc,[0,0,-1]);
 
-    gl.uniform3fv(viewworldpos_loc,[0,0,0]);//old l direction
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
     gl.bindVertexArray(models[i].vao);
     gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
+
+
 
   }
 }
@@ -292,31 +295,32 @@ function main() {
   var radPerSec	= Math.PI;
   var fps = 65;
   function run(now) {
+    //document.getElementById("debug").innerHTML = window.performance.now();
 
     if (now - lastFrame > 100) lastFrame = now;
     dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
 
-      if (keys.up) moves.r.x -= radPerSec*dt;
-      if (keys.down) moves.r.x += radPerSec*dt;
-      if (keys.left) moves.r.y -= radPerSec*dt;
-      if (keys.right) moves.r.y += radPerSec*dt;
-      if (keys.z) moves.r.z += radPerSec*dt;
-      if (keys.x) moves.r.z -= radPerSec*dt;
-      if (keys.w) moves.t.y += 40*dt;
-      if (keys.s) moves.t.y -= 40*dt;
-      if (keys.a) moves.t.x -= 40*dt;
-      if (keys.d) moves.t.x += 40*dt;
-      if (keys.q) moves.t.z += 40*dt;
-      if (keys.e) moves.t.z -= 40*dt;
-      if (keys.r) moves.m.x += 2*dt;
-      if (keys.f) moves.m.x -= 2*dt;
-      if (keys["1"]) moves.c.y += 140*dt;
-      if (keys["2"]) moves.c.y -= 140*dt;
-      if (keys["3"]) moves.c.x -= 140*dt;
-      if (keys["4"]) moves.c.x += 140*dt;
-      if (keys["5"]) moves.c.z += 140*dt;
-      if (keys["6"]) moves.c.z -= 140*dt;
+      if (keys.up) moves.change('r','x',-1*radPerSec*dt);
+      if (keys.down) moves.change('r','x',radPerSec*dt);
+      if (keys.left) moves.change('r','y',-1*radPerSec*dt);
+      if (keys.right) moves.change('r','y',radPerSec*dt);
+      if (keys.z) moves.change('r','z',radPerSec*dt);
+      if (keys.x) moves.change('r','z',-1*radPerSec*dt);
+      if (keys.w) moves.change('t','y',40*dt);
+      if (keys.s) moves.change('t','y',-1*40*dt);
+      if (keys.a) moves.change('t','x',-1*40*dt);
+      if (keys.d) moves.change('t','x',40*dt);
+      if (keys.q) moves.change('t','z',40*dt);
+      if (keys.e) moves.change('t','z',-1*40*dt);
+      if (keys.r) moves.change('m','x',2*dt);
+      if (keys.f) moves.change('m','x',-1*2*dt);
+      if (keys["1"]) moves.change('c','y',140*dt);
+      if (keys["2"]) moves.change('c','y',-1*140*dt);
+      if (keys["3"]) moves.change('c','x',-1*140*dt);
+      if (keys["4"]) moves.change('c','x',140*dt);
+      if (keys["5"]) moves.change('c','z',140*dt);
+      if (keys["6"]) moves.change('c','z',-1*140*dt);
 
       drawFrame(moves);
       lastFrame = now;
@@ -527,8 +531,7 @@ function whenLoaded(num){
 
 function loadMeshFile(fileName,subjectidx=0) {
   var meshRequest = new XMLHttpRequest();
-  meshRequest.open("GET", `/shape/mesh/${subjectidx}/${fileName}?_=${new Date().getTime()}`, true);
-  //meshRequest.open("GET",fileName, true);
+  meshRequest.open("GET", `/mesh/${subjectidx}/${fileName}?_=${new Date().getTime()}`, true);
   meshRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   meshRequest.onreadystatechange = function() {
     if (meshRequest.readyState == 4 && meshRequest.status == 200){
@@ -540,22 +543,13 @@ function loadMeshFile(fileName,subjectidx=0) {
     }
   }
   meshRequest.send(null);
-  //meshRequest.send(`rfile=${fileName}&subjectidx=${subjectidx}`);
 }
 
 
-function loadnewsubject(subjectidx,recenter=false) {
+function loadnewsubject(subjectidx) {
   center.count = 0;
   models = []; readyCount = 0;
-  if (recenter) {
-    moves = { t: {x:0, y:-3, z:75},
-              r: {x:3.14, y:3.14, z:0}, 
-              c: {x:0, y:0, z:0},
-              m: {x:0, y:0.0, z:0},
-              g: {x:0, y:0.0, z:0}, }
-  }
   for (var x in rois){
-    //fileName = `${filePath}resliced_mesh_${rois[x]}.m`;
     fileName = `resliced_mesh_${rois[x]}.m`;
     loadMeshFile(fileName,subjectidx);
   }

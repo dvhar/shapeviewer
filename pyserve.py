@@ -1,4 +1,4 @@
-#!/usr/local/anaconda/bin/python
+#!/usr/bin/python
 import os
 from flask import Flask, send_from_directory, request
 
@@ -60,7 +60,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-  return send_from_directory(dirmanager.programdir,'served.html')
+  return send_from_directory(dirmanager.programdir,'index.html')
 
 @app.route('/mesh/<subject>/<roi>')
 def mesh(subject,roi):
