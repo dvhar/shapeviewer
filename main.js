@@ -1,5 +1,4 @@
-
-
+//boilerplate for using webgl2
 function shaderSource(elmID){
 	var source = document.getElementById(elmID);
 	if(!source || source.text == ""){ console.log(elmID + " shader not found"); return null; }
@@ -108,40 +107,42 @@ var basecolor_loc = gl.getUniformLocation(program, "u_basecolor");
 var viewworldpos_loc = gl.getUniformLocation(program, "u_viewworldpos");
 var light_loc = gl.getUniformLocation(program, "u_litdirection");
 var normtype_loc = gl.getUniformLocation(program, "u_normtype");
-var filePath =  "/mesh/";
-var running =  "running";
+var lastFrame = 0;
+var radPerSec	= Math.PI;
+var fps = 65;
 models = []; 
 readyCount = 0; //14 total
 center = {};
 rois = [10, 11, 12, 13, 17, 18, 26, 49, 50, 51, 52, 53, 54, 58];
-var roicolors = [];
 var keys = {};
 var rHeight = window.innerHeight;
 var rWidth = window.innerWidth;
 var aspectRatio = rWidth / rHeight;
 var ntype = 0.0;
 var dt = 0;
+var rendertime = {
+    start: 0,
+    end: 0,
+    key: 0,
+    active: false,
+  }
 var moves = { t: {x:0, y:3, z:-75},
               r: {x:3.14, y:3.14, z:0}, 
               c: {x:0, y:0, z:-100},
               m: {x:0, y:0.0, z:0},
               g: {x:0, y:0.0, z:0},
-              otime: window.performance.now(),
-              ntime: window.performance.now(),
-              state: 0,
-              delta: 0,
               change : function (member,axis,amount){ 
-                this[member][axis] += amount; 
-                this.state++; 
-                this.delta = this.ntime - this.otime;
-                this.ntime = this.otime;
+                this[member][axis] += amount;
+                if (!rendertime.active) render();
                 }
               }
+
+//keyboard data and function
 keycodes = {
-  37: { label: 'left', member: 'r', axis: 'y',  change: -1},
-  38: { label: 'up', member: 'r', axis: 'x',  change: 1},
-  39: { label: 'right', member: 'r', axis: 'y',  change: -1},
-  40: { label: 'down', member: 'r', axis: 'x',  change: 1},
+  37: { label: 'left', member: 'r', axis: 'y',  change: -0.1},
+  38: { label: 'up', member: 'r', axis: 'x',  change: 0.1},
+  39: { label: 'right', member: 'r', axis: 'y',  change: 0.1},
+  40: { label: 'down', member: 'r', axis: 'x',  change: -0.1},
   65: { label: 'a', member: 't', axis: 'x', change: -1},
   68: { label: 'd', member: 't', axis: 'x', change: 1},
   87: { label: 'w', member: 't', axis: 'y', change: 1},
@@ -156,15 +157,21 @@ keycodes = {
   54: { label: '6', member: 'c', axis: 'z', change: -1},
   90: { label: 'z', member: 'r', axis: 'z', change: -1},
   88: { label: 'x', member: 'r', axis: 'z', change: 1},
-  82: { label: 'r', member: 'm', axis: 'x', change: 1},
-  70: { label: 'f', member: 'm', axis: 'x', change: -1},
+  82: { label: 'r', member: 'm', axis: 'x', change: 0.1},
+  70: { label: 'f', member: 'm', axis: 'x', change: -0.1},
 }
 onkeydown = onkeyup = function(e){
   e = e || event;
-  keys[keycodes[e.keyCode].label] = e.type == 'keydown';
+  if (keycodes[e.keyCode] ){
+    var k = keycodes[e.keyCode];
+    if (e.type == 'keydown' && !keys[k.label]) rendertime.key++;
+    else if (e.type == 'keyup') rendertime.key--;
+    keys[k.label] = e.type == 'keydown';
+    if (!rendertime.active) render();
+  }
 }
 
-//toggle button for color
+//switch color and normal vectors
 function colorgen(model){
   for (let h=0; h<3; h++)
     model.color[h] = Math.random();
@@ -172,6 +179,7 @@ function colorgen(model){
 function colorall(models){
   for (let h=0; h<14; h++)
     colorgen(models[h]);
+  drawFrame(moves);
 }
 document.getElementById("searchbut").onclick = ()=>{ selectDir(document.getElementById("dirsearch").value); };
 document.getElementById("cbut").onclick = ()=>{ colorall(models); };
@@ -184,6 +192,7 @@ nbut.onclick = ()=>{
     ntype = 1.0;
     nbut.innerHTML = "smooth";
   }
+  drawFrame(moves);
 }
 
 
@@ -191,8 +200,8 @@ nbut.onclick = ()=>{
 function mover(e){
   movex = ((e.clientX || e.targetTouches[0].clientX) - oldx);
   movey = ((e.clientY || e.targetTouches[0].clientY) - oldy);
-  moves.change('r','y',-0.5*movex*dt);
-  moves.change('r','x',0.5*movey*dt);
+  moves.change('r','y',-1.0*movex*dt);
+  moves.change('r','x',movey*dt);
   oldx = (e.clientX || e.targetTouches[0].clientX);
   oldy = (e.clientY || e.targetTouches[0].clientY);
 }
@@ -245,6 +254,7 @@ canvas.addEventListener("touchstart",zoomgrab);
 
 
 
+//draw individual fram
 function drawFrame(v) {
 
   gl.useProgram(program);
@@ -281,57 +291,56 @@ function drawFrame(v) {
     gl.bindVertexArray(models[i].vao);
     gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
 
-
-
   }
 }
 
 
-function main() {
+//renderloop runs smoothly while recieving input
+function run(now) {
 
-  drawFrame(moves);
+  if (now - lastFrame > 100) lastFrame = now;
+  dt = (now - lastFrame)/1000;
+  if (dt > 1/fps ) {
 
-  var lastFrame = 0;
-  var radPerSec	= Math.PI;
-  var fps = 65;
-  function run(now) {
-    //document.getElementById("debug").innerHTML = window.performance.now();
+    if (keys.up) moves.change('r','x',-1*radPerSec*dt);
+    if (keys.down) moves.change('r','x',radPerSec*dt);
+    if (keys.left) moves.change('r','y',-1*radPerSec*dt);
+    if (keys.right) moves.change('r','y',radPerSec*dt);
+    if (keys.z) moves.change('r','z',radPerSec*dt);
+    if (keys.x) moves.change('r','z',-1*radPerSec*dt);
+    if (keys.w) moves.change('t','y',40*dt);
+    if (keys.s) moves.change('t','y',-1*40*dt);
+    if (keys.a) moves.change('t','x',-1*40*dt);
+    if (keys.d) moves.change('t','x',40*dt);
+    if (keys.q) moves.change('t','z',40*dt);
+    if (keys.e) moves.change('t','z',-1*40*dt);
+    if (keys.r) moves.change('m','x',2*dt);
+    if (keys.f) moves.change('m','x',-1*2*dt);
+    if (keys["1"]) moves.change('c','y',140*dt);
+    if (keys["2"]) moves.change('c','y',-1*140*dt);
+    if (keys["3"]) moves.change('c','x',-1*140*dt);
+    if (keys["4"]) moves.change('c','x',140*dt);
+    if (keys["5"]) moves.change('c','z',140*dt);
+    if (keys["6"]) moves.change('c','z',-1*140*dt);
 
-    if (now - lastFrame > 100) lastFrame = now;
-    dt = (now - lastFrame)/1000;
-    if (dt > 1/fps ) {
-
-      if (keys.up) moves.change('r','x',-1*radPerSec*dt);
-      if (keys.down) moves.change('r','x',radPerSec*dt);
-      if (keys.left) moves.change('r','y',-1*radPerSec*dt);
-      if (keys.right) moves.change('r','y',radPerSec*dt);
-      if (keys.z) moves.change('r','z',radPerSec*dt);
-      if (keys.x) moves.change('r','z',-1*radPerSec*dt);
-      if (keys.w) moves.change('t','y',40*dt);
-      if (keys.s) moves.change('t','y',-1*40*dt);
-      if (keys.a) moves.change('t','x',-1*40*dt);
-      if (keys.d) moves.change('t','x',40*dt);
-      if (keys.q) moves.change('t','z',40*dt);
-      if (keys.e) moves.change('t','z',-1*40*dt);
-      if (keys.r) moves.change('m','x',2*dt);
-      if (keys.f) moves.change('m','x',-1*2*dt);
-      if (keys["1"]) moves.change('c','y',140*dt);
-      if (keys["2"]) moves.change('c','y',-1*140*dt);
-      if (keys["3"]) moves.change('c','x',-1*140*dt);
-      if (keys["4"]) moves.change('c','x',140*dt);
-      if (keys["5"]) moves.change('c','z',140*dt);
-      if (keys["6"]) moves.change('c','z',-1*140*dt);
-
-      drawFrame(moves);
-      lastFrame = now;
-    }
-    if (models.length == rois.length) window.requestAnimationFrame(run); 
+    drawFrame(moves);
+    lastFrame = now;
+    if (rendertime.key > 0) rendertime.end = now + 100;
   }
+  
+  if (models.length == rois.length && now < rendertime.end) window.requestAnimationFrame(run); 
+  else if (rendertime.end < now) rendertime.active = false;
+}
+
+//activate render loop until input stops
+function render() {
+  rendertime.start = window.performance.now();
+  rendertime.end = rendertime.start + 200;
+  rendertime.active = true;
   window.requestAnimationFrame(run);
-
 }
 
-
+//parse data from mesh files into float32 arrays
 function parseMesh(txt,model) {
 
   txt = txt.trim() + '\n';
@@ -471,8 +480,8 @@ function parseMesh(txt,model) {
   return model;
 }
 
+//load parsed data from float32 arrays into buffers for the gpu
 function loadBuffers(model){
-
 
   model.vao = gl.createVertexArray();
   gl.bindVertexArray(model.vao);
@@ -502,7 +511,7 @@ function loadBuffers(model){
 
 }
 
-
+//wait for data to load before rendering
 function whenLoaded(num){
   setTimeout(()=>{ 
     if (readyCount==num && center.count==1){
@@ -520,7 +529,7 @@ function whenLoaded(num){
         }
         loadBuffers(models[i]);
       }
-      main(); 
+      render(); 
     }
     else {
       whenLoaded(num); 
@@ -529,6 +538,7 @@ function whenLoaded(num){
 }
 
 
+//request and process data for individual files
 function loadMeshFile(fileName,subjectidx=0) {
   var meshRequest = new XMLHttpRequest();
   meshRequest.open("GET", `/mesh/${subjectidx}/${fileName}?_=${new Date().getTime()}`, true);
@@ -546,6 +556,7 @@ function loadMeshFile(fileName,subjectidx=0) {
 }
 
 
+//load whole new subject
 function loadnewsubject(subjectidx) {
   center.count = 0;
   models = []; readyCount = 0;

@@ -48,6 +48,8 @@ class dirmanager:
     return slist
 
   def getCurrentSubject(self,index):
+    if (len(self.subjects)) < 1:
+      self.getSubjectList()
     return self.subjectParentDir +'/'+ self.subjects[int(index)] +'/'
 
 
