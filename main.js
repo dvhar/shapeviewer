@@ -4,7 +4,6 @@ function shaderSource(elmID){
 	if(!source || source.text == ""){ console.log(elmID + " shader not found"); return null; }
 	return source.text;
 }
-
 function createShader(gl, type, source){
 	var shader = gl.createShader(type);
 	gl.shaderSource(shader,source);
@@ -15,7 +14,6 @@ function createShader(gl, type, source){
     return shader;
   console.log("no compile: "+gl.getShaderInfoLog(shader));
 }
-
 function createProgram(gl,vShader,fShader){
 	var prog = gl.createProgram();
 	gl.attachShader(prog,vShader);
@@ -29,15 +27,11 @@ function createProgram(gl,vShader,fShader){
     return prog;
   console.log("no program: "+gl.getProgramInfoLog(program));
 }
-
-
 var canvas = document.getElementById("c");
 var gl = canvas.getContext("webgl2");
 if (!gl) { console.log("no gl!"); }
-
 var vertShaderSource = shaderSource("vs");
 var fragShaderSource = shaderSource("fs");
-
 var vs = createShader(gl, gl.VERTEX_SHADER, vertShaderSource);
 var fs = createShader(gl, gl.FRAGMENT_SHADER, fragShaderSource);
 
@@ -50,6 +44,7 @@ gl.setSize = function(w,h){
 }
 
 
+//request and render subject list
 var currentsubject = 0;
 function getSubList() {
   var dirRequest = new XMLHttpRequest();
@@ -77,6 +72,7 @@ function getSubList() {
   dirRequest.send(null);
 }
 
+//request directory change and render subject from new directory
 function selectDir(dirName) {
   var dirRequest = new XMLHttpRequest();
   var sendurl = `/change?newdir=${encodeURIComponent(dirName)}`
@@ -93,6 +89,8 @@ function selectDir(dirName) {
   dirRequest.send(`finder=${dirName}`);
 }
 
+
+//global and glsl variables
 var program = createProgram(gl, vs, fs);
 var positionAttrLoc = gl.getAttribLocation(program, "a_position");
 var normal_loc = gl.getAttribLocation(program, "a_normal");
@@ -120,12 +118,16 @@ var rWidth = window.innerWidth;
 var aspectRatio = rWidth / rHeight;
 var ntype = 0.0;
 var dt = 0;
+
+//timing data for render loop
 var rendertime = {
     start: 0,
     end: 0,
     key: 0,
     active: false,
   }
+
+//parameters for manipulating image and method for rendering
 var moves = { t: {x:0, y:3, z:-75},
               r: {x:3.14, y:3.14, z:0}, 
               c: {x:0, y:0, z:-100},
@@ -133,47 +135,48 @@ var moves = { t: {x:0, y:3, z:-75},
               g: {x:0, y:0.0, z:0},
               change : function (member,axis,amount){ 
                 this[member][axis] += amount;
-                if (!rendertime.active) render();
+                render();
                 }
               }
 
 //keyboard data and function
 keycodes = {
-  37: { label: 'left', member: 'r', axis: 'y',  change: -0.1},
-  38: { label: 'up', member: 'r', axis: 'x',  change: 0.1},
-  39: { label: 'right', member: 'r', axis: 'y',  change: 0.1},
-  40: { label: 'down', member: 'r', axis: 'x',  change: -0.1},
-  65: { label: 'a', member: 't', axis: 'x', change: -1},
-  68: { label: 'd', member: 't', axis: 'x', change: 1},
-  87: { label: 'w', member: 't', axis: 'y', change: 1},
-  83: { label: 's', member: 't', axis: 'y', change: -1},
-  81: { label: 'q', member: 't', axis: 'z', change: 1},
-  69: { label: 'e', member: 't', axis: 'z', change: -1},
-  49: { label: '1', member: 'c', axis: 'y', change: 1},
-  50: { label: '2', member: 'c', axis: 'y', change: -1},
-  51: { label: '3', member: 'c', axis: 'x', change: 1},
-  52: { label: '4', member: 'c', axis: 'x', change: -1},
-  53: { label: '5', member: 'c', axis: 'z', change: 1},
-  54: { label: '6', member: 'c', axis: 'z', change: -1},
-  90: { label: 'z', member: 'r', axis: 'z', change: -1},
-  88: { label: 'x', member: 'r', axis: 'z', change: 1},
-  82: { label: 'r', member: 'm', axis: 'x', change: 0.1},
-  70: { label: 'f', member: 'm', axis: 'x', change: -0.1},
+  37: 'left',
+  38: 'up',
+  39: 'right',
+  40: 'down',
+  65: 'a',
+  68: 'd',
+  87: 'w',
+  83: 's',
+  81: 'q',
+  69: 'e',
+  49: '1',
+  50: '2',
+  51: '3',
+  52: '4',
+  53: '5',
+  54: '6',
+  90: 'z',
+  88: 'x',
+  82: 'r',
+  70: 'f',
 }
 onkeydown = onkeyup = function(e){
   e = e || event;
   if (keycodes[e.keyCode] ){
     var k = keycodes[e.keyCode];
-    if (e.type == 'keydown' && !keys[k.label]) rendertime.key++;
+    if (e.type == 'keydown' && !keys[k]) rendertime.key++;
     else if (e.type == 'keyup') rendertime.key--;
-    keys[k.label] = e.type == 'keydown';
-    if (!rendertime.active) render();
+    keys[k] = e.type == 'keydown';
+    render();
   }
 }
 
 //switch color and normal vectors
 function colorgen(model){
   for (let h=0; h<3; h++)
+    //model.color[h] = 0.8;
     model.color[h] = Math.random();
 }
 function colorall(models){
@@ -295,7 +298,7 @@ function drawFrame(v) {
 }
 
 
-//renderloop runs smoothly while recieving input
+//render loop runs smoothly until input stops
 function run(now) {
 
   if (now - lastFrame > 100) lastFrame = now;
@@ -332,12 +335,14 @@ function run(now) {
   else if (rendertime.end < now) rendertime.active = false;
 }
 
-//activate render loop until input stops
+//activate render loop for 200ms if not already running
 function render() {
-  rendertime.start = window.performance.now();
-  rendertime.end = rendertime.start + 200;
-  rendertime.active = true;
-  window.requestAnimationFrame(run);
+  if (!rendertime.active){
+    rendertime.start = window.performance.now();
+    rendertime.end = rendertime.start + 200;
+    rendertime.active = true;
+    window.requestAnimationFrame(run);
+  }
 }
 
 //parse data from mesh files into float32 arrays

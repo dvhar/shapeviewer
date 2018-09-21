@@ -124,9 +124,9 @@ body {
     float specular = dot(v_normal,halfVector);
     specular = pow(specular,128.0);
 
-    mix_color *= u_litcolor * light;
+    mix_color *= u_litcolor * light * 1.0;
     mix_color += specular * u_specularcolor;
-    mix_color.rgb += vec3(v_normal.r * .25, v_normal.g * .1, v_normal.b * .2);
+    mix_color.brg += vec3(v_normal.r * .25, v_normal.g * -0.1, v_normal.b * .2);
 
     outColor = vec4(mix_color,1);
   }
