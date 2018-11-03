@@ -266,22 +266,23 @@ function drawFrame(v) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.DEPTH_TEST);
+  mstack = [];
 
-
-  for (var i in models){
-
-    var tmat = p4Matrix(aspectRatio);
-    var mm = models[i].center;
-
-    tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
-    rx4Matrix(v.r.x,tmat);
-    ry4Matrix(v.r.y,tmat);
-    rz4Matrix(v.r.z,tmat);
-    tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,tmat);
+  var tmat = p4Matrix(aspectRatio);
+  tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
+  rx4Matrix(v.r.x,tmat);
+  ry4Matrix(v.r.y,tmat);
+  rz4Matrix(v.r.z,tmat);
 
     var litmat = i4Matrix();
     tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
     var litpos = vecProd([0,10,0,1],litmat);
+
+  for (var i in models){
+    mstack.push(tmat.slice(0,tmat.len));
+
+    var mm = models[i].center;
+    tr4Matrix(mm[0]*v.m.x,mm[1]*v.m.x,mm[2]*v.m.x,tmat);
 
     gl.uniformMatrix4fv(world_loc,false,tmat);
     gl.uniform3fv(liteworldpos_loc,litpos.slice(0,3));
@@ -294,6 +295,7 @@ function drawFrame(v) {
     gl.bindVertexArray(models[i].vao);
     gl.drawArrays(gl.TRIANGLES, 0, models[i].verts.length/3);
 
+    tmat = mstack.pop();
   }
 }
 

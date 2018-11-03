@@ -16,19 +16,23 @@ body {
 #whatFile {
   width: 2em;
 }
-#main {
-}
 #usage {
   display: block;
   text-align: left;
   max-width: 30em;
   margin: auto;
 }
+#searchbut {
+  background-color: black;
+  color: limegreen;
+  border: 2px solid green;
+  width: 130px;
+}
 .toggles {
   background-color: black;
   color: limegreen;
   border: 2px solid green;
-  width: 100px;
+  min-width: 100px;
 }
 .search {
   width: -webkit-fill-available;
@@ -66,7 +70,7 @@ body {
     <button id="nbut" class="toggles">chunky</button>
     <button id="cbut" class="toggles">change color</button>
     <input type="text" name="finder" id="dirsearch" class="search"></input>
-    <button class="toggles" id="searchbut">change directory</button>
+    <button id="searchbut">change directory</button>
     <span id="debug"></span>
   </div>
 
