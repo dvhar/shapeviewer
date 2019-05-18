@@ -5,3 +5,7 @@ Requires a browser with webgl2.
 Comes with a simple python server which can get enigma data from different directories on your computer.
 
 Very basic development server has no security or authentication features yet - only use in a secure environment.
+
+<img src="Demo/brain1.png" align="middle"/>
+<br>
+<img src="Demo/brain2.png" align="middle"/>

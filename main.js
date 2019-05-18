@@ -208,6 +208,30 @@ function mover(e){
   oldx = (e.clientX || e.targetTouches[0].clientX);
   oldy = (e.clientY || e.targetTouches[0].clientY);
 }
+/* copypaste from dinosaur, not working yet
+function mover(e){
+  var z=0;
+  if (mover.nt==null) {mover.nt=window.performance.now(); mover.ot=mover.nt;}
+  newx = (e.clientX || e.targetTouches[0].clientX);
+  newy = (e.clientY || e.targetTouches[0].clientY);
+  if (e.targetTouches != null && e.targetTouches[1] != null){
+    newx = (newx + e.targetTouches[1].clientX)/2;
+    newy = (newy + e.targetTouches[1].clientY)/2;
+    z=1;
+  }
+  var mx = (newx - oldx);
+  var my = (newy - oldy);
+  mover.ot = mover.nt;
+  mover.nt = window.performance.now();
+  if (z==0||(mover.nt-mover.ot<50 && Math.abs(mx)<30 && Math.abs(my)<30)){
+    moves.change('r','y',mx*dt);
+    moves.change('r','x',my*dt);
+  }
+  oldx = newx;
+  oldy = newy;
+}
+*/
+
 
 function dropper(e){
   document.removeEventListener("mousup",dropper);
@@ -274,9 +298,9 @@ function drawFrame(v) {
   ry4Matrix(v.r.y,tmat);
   rz4Matrix(v.r.z,tmat);
 
-    var litmat = i4Matrix();
-    tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
-    var litpos = vecProd([0,10,0,1],litmat);
+  var litmat = i4Matrix();
+  tr4Matrix(v.c.x,v.c.y,v.c.z,litmat);
+  var litpos = vecProd([0,10,0,1],litmat);
 
   for (var i in models){
     mstack.push(tmat.slice(0,tmat.len));

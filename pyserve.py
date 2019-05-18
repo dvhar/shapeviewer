@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os
 from flask import Flask, send_from_directory, request
 
@@ -67,7 +67,7 @@ def home():
 @app.route('/mesh/<subject>/<roi>')
 def mesh(subject,roi):
   if 'resliced_mesh' in roi:
-    print roi,subject,dirmanager.getCurrentSubject(subject)
+    #print(roi,subject,dirmanager.getCurrentSubject(subject))
     return send_from_directory(dirmanager.getCurrentSubject(subject), roi)
   return 'permission denied'
 
@@ -88,7 +88,7 @@ def change():
     response = 'Directory changed to ' + newpath
   else:
     response = newpath + ' is not a directory with enigma data.'
-  print response
+  print(response)
   return response
 
 if __name__ == '__main__':
